@@ -24,18 +24,13 @@ extern bool keyStates[256];
 extern std::map<int, bool> specialKeyStates;
 
 namespace Figure_Type {
+	const int ORBIT = -3;
 	const int IDK = -2;
 	const int AXIS = -1;
 
-	const int BODY = 0;
-	const int LEFT_ARM = 1;
-	const int RIGHT_ARM = 2;
-	const int LEFT_LEG = 3;
-	const int RIGHT_LEG = 4;
-
-	const int BOX = 50;
-	const int BOX_DOOR = 51;
-	const int BOX_WALL = 52;
+	const int LIGHT = 0;
+	const int CUBE = 1;
+	const int PYRAMID = 2;
 
 	const int ETC = 99;
 }
@@ -43,13 +38,14 @@ namespace Figure_Type {
 struct Vertex_glm {
 	glm::vec3 position;
 	glm::vec3 color;
+	glm::vec3 normal;
 };
 
 struct Custom_OBJ {
 	std::string name;
 	std::vector<Vertex_glm> vertices;
-	std::vector<glm::vec3> normals;
 	std::vector<unsigned int> indices;
+	glm::vec3 origin{ 0.0f, 0.0f, 0.0f };
 	GLuint VBO{}, VAO{}, IBO{};
 
 };
@@ -57,6 +53,24 @@ struct Custom_OBJ {
 struct OBJ_File {
 	std::string file_name;
 	std::vector<Custom_OBJ> objects;
+};
+
+struct Light {
+	glm::vec3 init_position;
+	Vertex_glm light_vertex;
+	glm::vec3 light_color;
+	glm::vec3 strength;
+	GLuint VAO{}, VBO{}, IBO{};
+	unsigned int indices{ 0 };
+	GLuint LightPosID{}, LightColorID{}, LightStrengthID{};
+
+	Light() {
+		init_position = glm::vec3(0.0f, 0.0f, 0.0f);
+		light_vertex.position = init_position;
+		light_vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
+		light_color = glm::vec3(1.0f, 1.0f, 1.0f);
+		strength = glm::vec3(1.0f, 1.0f, 1.0f);
+	}
 };
 
 struct AABB {
@@ -73,42 +87,26 @@ extern std::vector<Vertex_glm> Axis_Vertex;
 extern std::vector<unsigned int> Axis_Index;
 
 extern glm::vec3 EYE, AT, UP, Camera_Transform, Camera_Transform_Factor;
-extern GLuint PerspectiveMatrixID, ViewMatrixID;
+extern GLuint PerspectiveMatrixID, ViewMatrixID, ViewPosID;
 extern float FOV, AspectRatio, NearClip, FarClip;
-extern float Camera_Movement_Factor_Scale;
-extern float Camera_Rotation_Sum, Camera_Rotation_Factor, Camera_Rotation_Factor_Scale;
 
 extern GLuint FigureTypeID;
+extern bool Draw_Cube, Light_On;
 
 extern GLuint ModelMatrixID;
-extern glm::vec3 Model_Transform, Model_Movement_Factor, Model_Scale;
-extern float Model_Movement_Factor_Scale, Rotation_Speed;
-extern glm::quat Model_Orientation;
-extern glm::vec3 Model_Velocity;
-extern bool is_Jumping;
-extern const float GRAVITY;
-extern const float JUMP_FORCE;
-extern float Gravity_Scale;
+extern glm::vec3 Model_Transform, Model_Scale;
+extern int Rotation_Mode, Revolution_Mode;
 
-extern GLuint BodyMatrixID;
+extern GLuint CubeMatrixID, PyramidMatrixID;
+extern float Cube_Rotation_Angle, Pyramid_Rotation_Angle;
+extern float Cube_Rotation_Factor, Pyramid_Rotation_Factor;
 
-extern float Animation_Time, Animation_Speed;
-extern GLuint LeftArmMatrixID, RightArmMatrixID;
-extern glm::vec3 Arm_Offset, Arm_Rotation_Angle;
-extern float Arm_Rotation_Speed, Arm_Rotation_Max_Angle;
-
-extern GLuint LeftLegMatrixID, RightLegMatrixID;
-extern glm::vec3 Leg_Offset, Leg_Rotation_Angle;
-extern float Leg_Rotation_Speed, Leg_Rotation_Max_Angle;
-
-extern bool LookAtRobot;
-
-extern bool OpenDoor;
-extern float Door_Open_Progress, doorAnimationSpeed, doorSlideHeight;
-extern GLuint DoorMatrixID;
+extern float Light_Revolution_Angle, Light_Revolution_Factor;
+extern glm::vec3 Light_Trasform;
 
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
+void DrawModels();
 
 void KeyBoard(unsigned char key, int x, int y);
 void KeyBoardUp(unsigned char key, int x, int y);
@@ -129,9 +127,9 @@ void MakeDynamicMatrix();
 void GetUniformLocations();
 void UpdateUniformMatrices();
 void ComposeOBJColor();
+void ComposeOribit();
 
 void Type_distinction(const std::string& name, GLuint& FigureTypeID);
-
 
 AABB CalculateAABB(const std::vector<Vertex_glm>& vertices);
 AABB TransformAABB(const AABB& aabb, const glm::mat4& transform);

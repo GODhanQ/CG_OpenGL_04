@@ -139,6 +139,11 @@
   <ItemGroup>
     <ClInclude Include="VarANDFunc_03_Shader25.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="OBJ\Figures.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Object>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

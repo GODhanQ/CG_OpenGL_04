@@ -12,52 +12,34 @@ std::map<int, bool> specialKeyStates;
 
 glm::vec3 EYE(0.0f, 30.0f, 50.0f), AT(0.0f, 5.0f, 0.0f), UP(0.0f, 1.0f, 0.0f);
 glm::vec3 Camera_Transform(0.0f, 0.0f, 0.0f), Camera_Transform_Factor(0.0f, 0.0f, 0.0f);
-GLuint PerspectiveMatrixID{}, ViewMatrixID;
+GLuint PerspectiveMatrixID{}, ViewMatrixID, ViewPosID{};
 float FOV{ 45.0f }, AspectRatio{ (float)Window_width / (float)Window_height }, NearClip{ 0.1f }, FarClip{ 150.0f };
-float Camera_Movement_Factor_Scale{ 10.f };
-float Camera_Rotation_Sum{}, Camera_Rotation_Factor{}, Camera_Rotation_Factor_Scale{ 50.f };
 
 GLuint FigureTypeID{};
+bool Draw_Cube{ true }, Light_On{ true };
 
 GLuint ModelMatrixID{};
-glm::vec3 Model_Transform(0.0f, 0.5f, 0.0f), Model_Movement_Factor(0.0f, 0.0f, 0.0f);
-glm::vec3 Model_Scale(0.5f, 0.5f, 0.5f);
-float Model_Movement_Factor_Scale{ 10.0f }, Rotation_Speed{ 10.0f };
-glm::quat Model_Orientation{};
-glm::vec3 Model_Velocity(0.0f);
-bool is_Jumping{ false };
-float Gravity_Scale{ 1.0f };
-const float GRAVITY{ 9.8f * Gravity_Scale };
-const float JUMP_FORCE{ 10.0f };
+glm::vec3 Model_Transform(0.0, 0.0, 0.0), Model_Scale(1.0, 1.0, 1.0);
+// 0 : stop, 1 : +Y axis, 2 : -Y axis
+int Rotation_Mode{};
+// 0 : stop, 1 : +Y axis, 2 : -Y axis
+int Revolution_Mode{};
 
-GLuint BodyMatrixID{};
+GLuint CubeMatrixID{}, PyramidMatrixID{};
+float Cube_Rotation_Angle{}, Pyramid_Rotation_Angle{};
+float Cube_Rotation_Factor{ 50.0f }, Pyramid_Rotation_Factor{ 50.0f };
 
-float Animation_Time{ 0.0f }, Animation_Speed{ 5.0f };
-GLuint LeftArmMatrixID{}, RightArmMatrixID{};
-glm::vec3 Arm_Offset(0.0f, 7.5f ,0.0f), Arm_Rotation_Angle(0.0f, 0.0f, 0.0f);
-float Arm_Rotation_Speed{ 5.0f }, Arm_Rotation_Max_Angle{ 60.0f };
-
-GLuint LeftLegMatrixID{}, RightLegMatrixID{};
-glm::vec3 Leg_Offset(0.0f, 4.5f, 0.0f), Leg_Rotation_Angle(0.0f, 0.0f, 0.0f);
-float Leg_Rotation_Speed{ 5.0f }, Leg_Rotation_Max_Angle{ 60.0f };
-
-bool LookAtRobot{ false };
-
-bool OpenDoor{ false };
-float Door_Open_Progress{ 0.0f }, doorAnimationSpeed{ 2.0f }, doorSlideHeight{ 25.0f };
-GLuint DoorMatrixID{};
-
-
-
+float Light_Revolution_Angle{}, Light_Revolution_Factor{ 50.0f };
+glm::vec3 Light_Trasform(0.0f, 0.0f, 2.5f);
 
 std::vector<Vertex_glm> Axis_Vertex = {
 	// Positions					// Colors
 	{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f) }, // X axis - Red
-	{ glm::vec3(5.0f, 0.0f, 0.0f),  glm::vec3(1.0f, 0.0f, 0.0f) },
+	{ glm::vec3(10.0f, 0.0f, 0.0f),  glm::vec3(1.0f, 0.0f, 0.0f) },
 	{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) }, // Y axis - Green
-	{ glm::vec3(0.0f, 5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
+	{ glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
 	{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) }, // Z axis - Blue
-	{ glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 0.0f, 1.0f) }
+	{ glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f) }
 };
 std::vector<unsigned int> Axis_Index = {
 	0, 1,

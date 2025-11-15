@@ -2,52 +2,40 @@
 
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_color;
+layout(location = 2) in vec3 in_normal;
 
 uniform int Figure_Type;
 uniform mat4 Perspective_Matrix, View_Matrix;
 uniform mat4 Model_Matrix;
-uniform mat4 Body_Matrix;
-uniform mat4 LeftArm_Matrix, RightArm_Matrix;
-uniform mat4 LeftLeg_Matrix, RightLeg_Matrix;
-uniform mat4 Door_Matrix;
+uniform mat4 Cube_Matrix, Pyramid_Matrix;
 
-const int BOX_WALL = 5;
-const int BOX_DOOR = 6;
-const int ETC = 7;
-
+out vec3 out_fragPos;
 out vec3 out_color;
+out vec3 out_normal;
 
 void main()
 {
     vec4 aPos = vec4(in_position, 1.0);
+    mat4 objectMat = mat4(1.0);
     
-    if (Figure_Type >= 0 && Figure_Type < 50) {
-        switch(Figure_Type) {
-        case 0:             // Body
-            aPos = Body_Matrix * aPos;
-            break;
-        case 1:             // Left Arm
-            aPos = LeftArm_Matrix * aPos;
-            break;
-        case 2:             // Right Arm
-            aPos = RightArm_Matrix * aPos;
-            break;
-        case 3:             // Left Leg
-            aPos = LeftLeg_Matrix * aPos;
-            break;
-        case 4:             // Right Leg
-            aPos = RightLeg_Matrix * aPos;
-            break;
-        }
-
-        
+    if (Figure_Type == 1) objectMat = Cube_Matrix;
+    else if (Figure_Type == 2) objectMat = Pyramid_Matrix;
+    
+    if (Figure_Type >= 0 || Figure_Type == -3) {
+        aPos = objectMat * aPos;
         aPos = Model_Matrix * aPos;
     }
 
-    if (Figure_Type == 51) {
-        aPos = Door_Matrix * aPos;
+    // Normal
+    if (Figure_Type > 0) {
+        mat3 normalMat = transpose(inverse(mat3(Model_Matrix * objectMat)));
+        out_normal = normalize(normalMat * in_normal);
+    } else {
+        out_normal = in_normal;
     }
 
-    gl_Position = Perspective_Matrix * View_Matrix * aPos;
+    out_fragPos = vec3(aPos);
     out_color = in_color;
+
+    gl_Position = Perspective_Matrix * View_Matrix * aPos;
 }

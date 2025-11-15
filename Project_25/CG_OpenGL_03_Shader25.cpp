@@ -8,14 +8,15 @@ std::uniform_int_distribution<int> uid_0_3(0, 3);
 
 glm::mat4 Perspective_Matrix(1.0f), View_Matrix;
 glm::mat4 Model_Matrix(1.0f);
-glm::mat4 Body_Matrix(1.0f);
-glm::mat4 LeftArm_Matrix(1.0f), RightArm_Matrix(1.0f);
-glm::mat4 LeftLeg_Matrix(1.0f), RightLeg_Matrix(1.0f);
-glm::mat4 Door_Matrix(1.0f);
+glm::mat4 Cube_Matrix(1.0f), Pyramid_Matrix(1.0f);
 
 std::vector<OBJ_File> g_OBJ_Files;
 std::map<std::string, AABB> g_LocalAABBs; // 객체별 로컬 AABB 저장
 
+GLuint VAO_orbit, VBO_orbit, IBO_orbit;;
+std::vector<Light> g_Lights;
+std::vector<Vertex_glm> orbit_vertices;
+std::vector<unsigned int> orbit_indices;
 
 int main(int argc, char** argv)
 {
@@ -74,7 +75,7 @@ int main(int argc, char** argv)
 }
 
 GLvoid drawScene() {
-	GLfloat rColor{ 0.5f }, gColor{ 0.5f }, bColor{ 0.7f };
+	GLfloat rColor{ 0.2f }, gColor{ 0.2f }, bColor{ 0.4f };
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -90,75 +91,9 @@ GLvoid drawScene() {
 	View_Matrix = glm::lookAt(EYE, AT, UP);
 	UpdateUniformMatrices();
 
-	// OBJ in Main Viewport
-	// Draw Axis
-	glBindVertexArray(VAO_axis);
-	glUniform1i(FigureTypeID, Figure_Type::AXIS);
-	glLineWidth(2.0f);
-	glDrawElements(GL_LINES, Axis_Index.size(), GL_UNSIGNED_INT, 0);
+	// Draw Models
+	DrawModels();
 
-	// Draw OBJ Models
-	int box_face_count = 0;
-	for (const auto& file : g_OBJ_Files) {
-		for (const auto& object : file.objects) {
-			glBindVertexArray(object.VAO);
-
-			if (object.name == "Box") {
-				glUniform1i(FigureTypeID, Figure_Type::BOX_WALL);
-				glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
-				glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * 24));
-				glUniform1i(FigureTypeID, Figure_Type::BOX_DOOR);
-				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * 18));
-			}
-			else {
-				GLuint Figure_Type;
-				Type_distinction(object.name, Figure_Type);
-				glUniform1i(FigureTypeID, Figure_Type);
-
-				glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_INT, 0);
-			}
-		}
-	}
-
-	// 2. Minimap Viewport
-	glClear(GL_DEPTH_BUFFER_BIT);
-	int minimap_size = width / 4;
-	glViewport(width - minimap_size, height - minimap_size, minimap_size, minimap_size);
-
-	// 미니맵을 위한 Orthographic Projection과 Top-down View 설정
-	Perspective_Matrix = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, NearClip, FarClip);
-	View_Matrix = glm::lookAt(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-	UpdateUniformMatrices();
-
-	// Re-draw objects in Minimap
-	// Draw Axis
-	glBindVertexArray(VAO_axis);
-	glUniform1i(FigureTypeID, Figure_Type::AXIS);
-	glLineWidth(2.0f);
-	glDrawElements(GL_LINES, Axis_Index.size(), GL_UNSIGNED_INT, 0);
-
-	// Draw OBJ Models
-	box_face_count = 0;
-	for (const auto& file : g_OBJ_Files) {
-		for (const auto& object : file.objects) {
-			glBindVertexArray(object.VAO);
-
-			if (object.name == "Box") {
-				glUniform1i(FigureTypeID, Figure_Type::BOX_WALL);
-				glDrawElements(GL_TRIANGLES, 18, GL_UNSIGNED_INT, 0);
-				glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * 24));
-				glUniform1i(FigureTypeID, Figure_Type::BOX_DOOR);
-				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * 18));
-			}
-			else {
-				GLuint Figure_Type;
-				Type_distinction(object.name, Figure_Type);
-				glUniform1i(FigureTypeID, Figure_Type);
-
-				glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_INT, 0);
-			}
-		}
-	}
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -167,115 +102,111 @@ GLvoid Reshape(int w, int h) {
 	MakeStaticMatrix();
 	glUniformMatrix4fv(PerspectiveMatrixID, 1, GL_FALSE, &Perspective_Matrix[0][0]);
 }
+void DrawModels() {
+	// Draw Axis
+	glBindVertexArray(VAO_axis);
+	glUniform1i(FigureTypeID, Figure_Type::AXIS);
+	glLineWidth(2.0f);
+	glDrawElements(GL_LINES, Axis_Index.size(), GL_UNSIGNED_INT, 0);
+
+	// Light Orbit Path
+	glBindVertexArray(VAO_orbit);
+	glUniform1i(FigureTypeID, Figure_Type::ORBIT);
+	glLineWidth(1.0f);
+	glDrawElements(GL_LINE_STRIP, orbit_indices.size(), GL_UNSIGNED_INT, 0);
+
+	// Draw Light Source
+	for (auto& light : g_Lights) {
+		glBindVertexArray(light.VAO);
+
+		glUniform1i(FigureTypeID, Figure_Type::LIGHT);
+		glPointSize(5.0f);
+
+		if (light.LightPosID != -1) {
+			light.LightPosID = glGetUniformLocation(shaderProgramID, "lightPos");
+			light.LightColorID = glGetUniformLocation(shaderProgramID, "lightColor");
+		}
+		
+		if (Light_On) {
+			glm::vec4 lightPos_world_vec4 = Model_Matrix * glm::vec4(light.light_vertex.position, 1.0f);
+			glm::vec3 lightPos_world = glm::vec3(lightPos_world_vec4);
+
+			glUniform3fv(light.LightPosID, 1, &lightPos_world[0]);
+			glUniform3fv(light.LightColorID, 1, &light.light_color[0]);
+		}
+		else {
+			glUniform3f(light.LightPosID, 0.0f, 0.0f, 0.0f);
+			glUniform3f(light.LightColorID, 0.0f, 0.0f, 0.0f);
+		}
+		
+		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0);
+
+	}
+
+	// Draw OBJ Models
+	int box_face_count = 0;
+	for (const auto& file : g_OBJ_Files) {
+		for (const auto& object : file.objects) {
+			if ((Draw_Cube && object.name.find("Cube") == std::string::npos) ||
+				(!Draw_Cube && object.name.find("Pyramid") == std::string::npos)) {
+				continue;
+			}
+			glBindVertexArray(object.VAO);
+
+			GLuint Figure_Type;
+			glm::mat4 Matrix(1.0f);
+			Type_distinction(object.name, Figure_Type);
+			glUniform1i(FigureTypeID, Figure_Type);
+
+			glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_INT, 0);
+		}
+	}
+
+}
 
 void KeyBoard(unsigned char key, int x, int y) {
 	keyStates[key] = true;
 	switch (key) {
-	case 'w':
-		Model_Movement_Factor.z -= 1.0f;
-		Model_Movement_Factor.z = glm::clamp(Model_Movement_Factor.z, -1.0f, 1.0f);
-		break;
-	case 's':
-		Model_Movement_Factor.z += 1.0f;
-		Model_Movement_Factor.z = glm::clamp(Model_Movement_Factor.z, -1.0f, 1.0f);
-		break;
-	case 'a':
-		Model_Movement_Factor.x -= 1.0f;
-		Model_Movement_Factor.x = glm::clamp(Model_Movement_Factor.x, -1.0f, 1.0f);
-		break;
-	case 'd':
-		Model_Movement_Factor.x += 1.0f;
-		Model_Movement_Factor.x = glm::clamp(Model_Movement_Factor.x, -1.0f, 1.0f);
-		break;
-	case '+':
-		Model_Movement_Factor_Scale += 5.0f;
-		Model_Movement_Factor_Scale = glm::clamp(Model_Movement_Factor_Scale, 10.0f, 50.0f);
-		Animation_Speed += 1.0f;
-		Arm_Rotation_Max_Angle += 5.0f;
-		Animation_Speed = glm::clamp(Animation_Speed, 5.0f, 15.0f);
-		Arm_Rotation_Max_Angle = glm::clamp(Arm_Rotation_Max_Angle, 60.0f, 90.0f);
+	case 'n':
+		Draw_Cube = !Draw_Cube;
 
-		std::cout << "Model_Movement_Factor_Scale: " << Model_Movement_Factor_Scale << "\n";
+		std::cout << (Draw_Cube ? "Draw Cube\n" : "Draw Pyramid\n");
 		break;
-	case '-':
-		Model_Movement_Factor_Scale -= 5.0f;
-		Model_Movement_Factor_Scale = glm::clamp(Model_Movement_Factor_Scale, 10.0f, 50.0f);
-		Animation_Speed -= 1.0f;
-		Arm_Rotation_Max_Angle -= 5.0f;
-		Animation_Speed = glm::clamp(Animation_Speed, 5.0f, 15.0f);
-		Arm_Rotation_Max_Angle = glm::clamp(Arm_Rotation_Max_Angle, 60.0f, 90.0f);
+	case 'm':
+		Light_On = !Light_On;
 
-		std::cout << "Model_Movement_Factor_Scale: " << Model_Movement_Factor_Scale << "\n";
-		break;
-	case ' ':
-		if (!is_Jumping) {
-			is_Jumping = true;
-			Model_Velocity.y = JUMP_FORCE;
-		}
-
-		std::cout << "Jump!" << (is_Jumping ? "in sky" : "on floor") << "\n";
-		break;
-
-	case 'i':
-		// Reset All
-		Model_Transform = glm::vec3(0.0f, 0.0f, 0.0f);
-		Model_Movement_Factor = glm::vec3(0.0f, 0.0f, 0.0f);
-		Model_Orientation = glm::quat();
-		Model_Scale = glm::vec3(0.5f, 0.5f, 0.5f);
-		Model_Movement_Factor_Scale = 10.0f;
-		Animation_Time = 0.0f;
-		Animation_Speed = 10.0f;
-		EYE = glm::vec3(0.0f, 20.0f, 40.0f);
-		Arm_Rotation_Max_Angle = 60.0f;
-		Leg_Rotation_Max_Angle = 60.0f;
-		is_Jumping = false;
-		std::cout << "Reset All Parameters\n";
-		break;
-
-	case 'x':
-		Camera_Transform_Factor.x -= 1.0f;
-		Camera_Transform_Factor.x = glm::clamp(Camera_Transform_Factor.x, -1.0f, 1.0f);
-		break;
-	case 'X':
-		Camera_Transform_Factor.x += 1.0f;
-		Camera_Transform_Factor.x = glm::clamp(Camera_Transform_Factor.x, -1.0f, 1.0f);
+		std::cout << (Light_On ? "Light On\n" : "Light Off\n");
 		break;
 	case 'y':
-		Camera_Rotation_Factor -= 1.0f;
-		Camera_Rotation_Factor = glm::clamp(Camera_Rotation_Factor, -1.0f, 1.0f);
+		Rotation_Mode = (Rotation_Mode + 1) % 3;
+
+		if (Rotation_Mode == 0)
+			std::cout << "Rotation Stopped\n";
+		else if (Rotation_Mode == 1)
+			std::cout << "Rotation +Y Axis\n";
+		else if (Rotation_Mode == 2)
+			std::cout << "Rotation -Y Axis\n";
 		break;
-	case 'Y':
-		Camera_Rotation_Factor += 1.0f;
-		Camera_Rotation_Factor = glm::clamp(Camera_Rotation_Factor, -1.0f, 1.0f);
+	case 'r':
+		Revolution_Mode = (Revolution_Mode + 1) % 3;
+
+		if (Revolution_Mode == 0)
+			std::cout << "Revolution Stopped\n";
+		else if (Revolution_Mode == 1)
+			std::cout << "Revolution +Y Axis\n";
+		else if (Revolution_Mode == 2)
+			std::cout << "Revolution -Y Axis\n";
 		break;
 	case 'z':
-		Camera_Transform_Factor.z -= 1.0f;
-		Camera_Transform_Factor.z = glm::clamp(Camera_Transform_Factor.z, -1.0f, 1.0f);
+		Light_Trasform.z += 0.5f;
+
+		ComposeOribit();
 		break;
 	case 'Z':
-		Camera_Transform_Factor.z += 1.0f;
-		Camera_Transform_Factor.z = glm::clamp(Camera_Transform_Factor.z, -1.0f, 1.0f);
+		Light_Trasform.z -= 0.5f;
+
+		ComposeOribit();
 		break;
-	case 'o':
-		OpenDoor = !OpenDoor;
-
-		std::cout << "OpenDoor: " << (OpenDoor ? "True" : "False") << "\n";
-		break;
-	case 'O':
-		AT = glm::vec3(0.0f, 50.0f, 0.0f);
-
-		std::cout << "Camera AT set to Top-down View\n";
-		break;
-
-	case '1':
-		LookAtRobot = !LookAtRobot;
-
-		if (!LookAtRobot) {
-			AT = glm::vec3(0.0f, 5.0f, 0.0f);
-			EYE = glm::vec3(0.0f, 30.0f, 50.0f);
-		}
-		break;
-
 	case 'q':
 		exit(0);
 
@@ -286,32 +217,7 @@ void KeyBoard(unsigned char key, int x, int y) {
 void KeyBoardUp(unsigned char key, int x, int y) {
 	keyStates[key] = false;
 	switch (key) {
-	case 'w':
-		Model_Movement_Factor.z += 1.0f;
-		break;
-	case 's':
-		Model_Movement_Factor.z -= 1.0f;
-		break;
-	case 'a':
-		Model_Movement_Factor.x += 1.0f;
-		break;
-	case 'd':
-		Model_Movement_Factor.x -= 1.0f;
-		break;
-
-	case 'x':
-	case 'X':
-		Camera_Transform_Factor.x = 0.0f;
-		break;
-	case 'y':
-	case 'Y':
-		Camera_Rotation_Factor = 0.0f;
-		break;
-	case 'z':
-	case 'Z':
-		Camera_Transform_Factor.z = 0.0f;
-		break;
-
+	
 	default:
 		break;
 	}
@@ -345,10 +251,7 @@ std::pair<float, float> ConvertScreenToOpenGL(int screen_x, int screen_y) {
 
 void INIT_BUFFER() {
 	std::vector<std::string> obj_filenames = {
-		"Box.obj",
-		"Robot.obj",
-		"Cube.obj",
-		"Test.obj",
+		"Figures.obj",
 	};
 
 	for (const auto& filename : obj_filenames) {
@@ -377,6 +280,8 @@ void INIT_BUFFER() {
 			glEnableVertexAttribArray(0);
 			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)offsetof(Vertex_glm, color));
 			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)offsetof(Vertex_glm, normal));
+			glEnableVertexAttribArray(2);
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, object.IBO);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, object.indices.size() * sizeof(unsigned int), object.indices.data(), GL_STATIC_DRAW);
@@ -389,6 +294,33 @@ void INIT_BUFFER() {
 		}
 	}
 	glBindVertexArray(0);
+
+	// Create Light Source Buffers
+	Light light1;
+	g_Lights.push_back(light1);
+
+	for (auto& light : g_Lights) {
+		glGenVertexArrays(1, &light.VAO);
+		glGenBuffers(1, &light.VBO);
+		glGenBuffers(1, &light.IBO);
+
+		glBindVertexArray(light.VAO);
+
+		glBindBuffer(GL_ARRAY_BUFFER, light.VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex_glm), &light.light_vertex, GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)offsetof(Vertex_glm, color));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)offsetof(Vertex_glm, normal));
+		glEnableVertexAttribArray(2);
+
+		unsigned int lightIndex = 0;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, light.IBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int), &lightIndex, GL_STATIC_DRAW);
+		
+		glBindVertexArray(0);
+	}
 
 
 	std::cout << "Setup Axis...\n";
@@ -410,6 +342,8 @@ void INIT_BUFFER() {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
+	ComposeOribit();
 }
 
 char* filetobuf(const char* file)
@@ -532,47 +466,54 @@ bool ReadObj(const std::string& path, OBJ_File& outFile) {
 				currentObject->name = "default_object";
 			}
 
-			unsigned int vertexIndex[4], uvIndex[4], normalIndex[4];
+			unsigned int vertexIndex[4] = { 0,0,0,0 }, uvIndex[4] = { 0,0,0,0 }, normalIndex[4] = { 0,0,0,0 };
 			int matches = fscanf(file, "%d/%d/%d %d/%d/%d %d/%d/%d %d/%d/%d\n",
 				&vertexIndex[0], &uvIndex[0], &normalIndex[0],
 				&vertexIndex[1], &uvIndex[1], &normalIndex[1],
 				&vertexIndex[2], &uvIndex[2], &normalIndex[2],
 				&vertexIndex[3], &uvIndex[3], &normalIndex[3]);
 
-			auto processFace = [&](int count) {
-				for (int i = 0; i < count; ++i) {
-					Vertex_glm vertex;
-					glm::vec3 normal;
-					vertex.position = temp_vertices[vertexIndex[i] - 1];
-					// UV, Normal 정보가 있다면 여기에 추가할 수 있습니다.
-					// vertex.uv = temp_uvs[uvIndex[i] - 1];
-					normal = temp_normals[normalIndex[i] - 1];
-					vertex.color = glm::vec3(1.0f, 1.0f, 1.0f); // 기본 색상
-
-					currentObject->vertices.push_back(vertex);
-					currentObject->normals.push_back(normal);
-					currentObject->indices.push_back(currentObject->vertices.size() - 1);
+			auto pushVertex = [&](int vi, int ni) {
+				Vertex_glm vertex;
+				vertex.position = temp_vertices[vi - 1];
+				vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
+				if (!temp_normals.empty() && ni > 0) {
+					vertex.normal = temp_normals[ni - 1];
 				}
+				else {
+					// 법선 정보가 없다면 임시로 (0,1,0) 넣어두고 이후 셰이더에서 보정 가능
+					vertex.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+				}
+				currentObject->vertices.push_back(vertex);
+				currentObject->indices.push_back(currentObject->vertices.size() - 1);
 				};
 
-			if (matches == 9) { // 삼각형
-				processFace(3);
+			if (matches == 9) { // 삼각형 (3개: v/vt/vn)
+				pushVertex(vertexIndex[0], normalIndex[0]);
+				pushVertex(vertexIndex[1], normalIndex[1]);
+				pushVertex(vertexIndex[2], normalIndex[2]);
 			}
 			else if (matches == 12) { // 사각형 -> 삼각형 2개로 분할
 				unsigned int v_indices[] = { 0, 1, 2, 0, 2, 3 };
 				for (int i = 0; i < 6; ++i) {
 					int idx = v_indices[i];
-					Vertex_glm vertex;
-					vertex.position = temp_vertices[vertexIndex[idx] - 1];
-					vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
-					currentObject->vertices.push_back(vertex);
-					currentObject->indices.push_back(currentObject->vertices.size() - 1);
+					pushVertex(vertexIndex[idx], normalIndex[idx]);
 				}
 			}
 			else {
 				// 다른 형식의 면 데이터는 현재 파서에서 지원하지 않음
 				char buffer[1024];
 				fgets(buffer, 1024, file); // 해당 라인의 나머지를 읽고 무시
+			}
+
+			// calculate origin
+			glm::vec3 origin(0.0f);
+			for (const auto& vertex : currentObject->vertices) {
+				origin += vertex.position;
+			}
+			if (!currentObject->vertices.empty()) {
+				origin /= static_cast<float>(currentObject->vertices.size());
+				currentObject->origin = origin;
 			}
 		}
 		else {
@@ -585,7 +526,6 @@ bool ReadObj(const std::string& path, OBJ_File& outFile) {
 	fclose(file);
 	return true;
 }
-
 void MakeStaticMatrix() {
 	Perspective_Matrix = glm::perspective(FOV, AspectRatio, NearClip, FarClip);
 }
@@ -597,184 +537,76 @@ void MakeDynamicMatrix() {
 	lastTime = currentTime;
 
 	// Camera Translation
-	EYE += Camera_Transform_Factor * deltaTime * Camera_Movement_Factor_Scale;
+	// EYE += Camera_Transform_Factor * deltaTime * Camera_Movement_Factor_Scale;
 
-	// Camera Rotation
-	if (Camera_Rotation_Factor != 0.0f) {
-		glm::vec3 direction = EYE - AT;
-		glm::mat4 rotation_matrix = glm::rotate(glm::mat4(1.0f),
-			glm::radians(Camera_Rotation_Factor * Camera_Rotation_Factor_Scale * deltaTime),
-			glm::vec3(0.0f, 1.0f, 0.0f));
-		EYE = AT + glm::vec3(rotation_matrix * glm::vec4(direction, 0.0f));
-	}
+	Model_Scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
-	View_Matrix = glm::lookAt(EYE, AT, UP);
-
-	// Box Door Animation
-	if (OpenDoor) {
-		Door_Open_Progress += doorAnimationSpeed * deltaTime;
-	}
-	else {
-		Door_Open_Progress -= doorAnimationSpeed * deltaTime;
-	}
-	Door_Open_Progress = glm::clamp(Door_Open_Progress, 0.0f, 1.0f);
-
-	glm::vec3 doorSlideOffset = glm::vec3(0.0f, doorSlideHeight * Door_Open_Progress, 0.0f);
-	Door_Matrix = glm::translate(glm::mat4(1.0f), doorSlideOffset);
-
-	// 1. 중력 적용
-	Model_Velocity.y -= GRAVITY * deltaTime;
-
-	// 2. 사용자 입력에 따른 수평 이동 계산
-	glm::vec3 horizontal_move(0.0f);
-	if (glm::length(Model_Movement_Factor) > 0.0f) {
-		// Animation
-		Animation_Time += deltaTime * Animation_Speed;
-		Arm_Rotation_Angle.x = Arm_Rotation_Max_Angle * sin(Animation_Time);
-		Leg_Rotation_Angle.x = Leg_Rotation_Max_Angle * cos(Animation_Time);
-
-		glm::vec3 move_direction = glm::normalize(Model_Movement_Factor);
-		glm::quat target_orientation = glm::quatLookAt(move_direction, glm::vec3(0.0f, 1.0f, 0.0f));
-
-		Model_Orientation = glm::slerp(Model_Orientation, target_orientation, deltaTime * Rotation_Speed);
-
-		horizontal_move = Model_Orientation * glm::vec3(0, 0, -1) * Model_Movement_Factor_Scale * deltaTime;
-	}
-	else {
-		Animation_Time = 0.0f;
-		Arm_Rotation_Angle.x = 0.0f;
-		Leg_Rotation_Angle.x = 0.0f;
-	}
-
-	// 3. 충돌 감지 및 반응 (축 분리)
-	// Box는 월드 고정(Identity)로 가정
-	AABB boxWorldAABB = TransformAABB(g_LocalAABBs["Box"], glm::mat4(1.0f));
-
-	// 로봇 파트 목록 (로봇 자체는 장애물 대상에서 제외)
-	std::vector<std::string> robot_parts = { "body", "left_arm", "right_arm", "left_leg", "right_leg" };
-
-	// 장애물 목록 구성: g_LocalAABBs의 모든 항목 중 로봇 파트는 제외 (고정 장애물, world transform = identity)
-	std::vector<std::pair<std::string, AABB>> obstacles;
-	for (const auto& kv : g_LocalAABBs) {
-		const std::string& name = kv.first;
-		if (std::find(robot_parts.begin(), robot_parts.end(), name) != robot_parts.end()) continue;
-		glm::mat4 obstacleWorldMat = glm::mat4(1.0f);
-		AABB worldAABB = TransformAABB(kv.second, obstacleWorldMat);
-		obstacles.emplace_back(name, worldAABB);
-	}
-
-	glm::mat4 rotationMatrix = glm::mat4_cast(Model_Orientation);
-	glm::mat4 correctionMatrix = glm::rotate(glm::mat4(1.0f),
-		glm::radians(180.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f));
-
-	// 3-1. 수평 이동 (XZ)
-	glm::vec3 next_pos_h = Model_Transform + glm::vec3(horizontal_move.x, 0.0f, horizontal_move.z);
-	glm::mat4 nextModelMatrix_h = glm::translate(glm::mat4(1.0f), next_pos_h);
-	nextModelMatrix_h = glm::scale(nextModelMatrix_h, Model_Scale);
-	nextModelMatrix_h = nextModelMatrix_h * rotationMatrix * correctionMatrix;
-
-	bool horizontalCollision = false;
-	for (const auto& part_name : robot_parts) {
-		if (!g_LocalAABBs.count(part_name)) continue;
-		AABB robotPartWorldAABB = TransformAABB(g_LocalAABBs[part_name], nextModelMatrix_h);
-
-		// (A) Box 규칙: 로봇 파트는 Box 내부에 있어야 함 — 벗어나면 충돌
-		if (!IsAABBInside(robotPartWorldAABB, boxWorldAABB)) {
-			horizontalCollision = true;
-			break;
-		}
-
-		// (B) 다른 고정 장애물과의 충돌 검사 (filled)
-		for (const auto& obs : obstacles) {
-			if (obs.first == "Box") continue;
-			if (CheckCollision(robotPartWorldAABB, obs.second)) {
-				horizontalCollision = true;
-				Model_Movement_Factor = -Model_Movement_Factor * 0.1f;
-				break;
-			}
-		}
-		if (horizontalCollision) break;
-	}
-
-	if (!horizontalCollision) {
-		Model_Transform = next_pos_h;
-	}
-
-	// 3-2. 수직 이동 (Y) — 단일 블록만 사용
-	glm::vec3 vertical_move_vec = glm::vec3(0.0f, Model_Velocity.y * deltaTime, 0.0f);
-	glm::vec3 next_pos_v = Model_Transform + vertical_move_vec;
-	glm::mat4 nextModelMatrix_v = glm::translate(glm::mat4(1.0f), next_pos_v);
-	nextModelMatrix_v = glm::scale(nextModelMatrix_v, Model_Scale);
-	nextModelMatrix_v = nextModelMatrix_v * rotationMatrix * correctionMatrix;
-
-	bool verticalCollision = false;
-	for (const auto& part_name : robot_parts) {
-		if (!g_LocalAABBs.count(part_name)) continue;
-		AABB robotPartWorldAABB = TransformAABB(g_LocalAABBs[part_name], nextModelMatrix_v);
-
-		// Box 내부 체크 (원래 로직 유지)
-		if (!IsAABBInside(robotPartWorldAABB, boxWorldAABB)) {
-			verticalCollision = true;
-			break;
-		}
-
-		// 다른 장애물과의 교차 체크
-		for (const auto& obs : obstacles) {
-			if (obs.first == "Box") continue;
-			if (CheckCollision(robotPartWorldAABB, obs.second)) {
-				verticalCollision = true;
-				break;
-			}
-		}
-		if (verticalCollision) break;
-	}
-
-	if (verticalCollision) {
-		// 바닥 또는 천장과 충돌 처리 (Box 기반 보정 유지)
-		if (Model_Velocity.y < 0) { // 바닥 충돌
-			if (g_LocalAABBs.count("left_leg")) {
-				//Model_Transform.y = boxWorldAABB.min.y - (g_LocalAABBs["left_leg"].min.y * Model_Scale.y);
-			}
-			Model_Velocity.y = 0.0f;
-			is_Jumping = false;
-		}
-		else if (Model_Velocity.y > 0) { // 천장 충돌
-			Model_Velocity.y = 0.0f;
-		}
-	}
-	else {
-		Model_Transform = next_pos_v;
-		is_Jumping = true;
-	}
-
-	rotationMatrix = glm::mat4_cast(Model_Orientation);
-	correctionMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	Model_Matrix = glm::mat4(1.0f);
-	Model_Matrix = glm::translate(Model_Matrix, Model_Transform);
 	Model_Matrix = glm::scale(Model_Matrix, Model_Scale);
-	Model_Matrix = Model_Matrix * rotationMatrix * correctionMatrix;
+	Model_Matrix = glm::translate(Model_Matrix, Model_Transform);
 
-	if (LookAtRobot) {
-		AT = Model_Transform;
-		EYE = AT + glm::vec3(0.0f, 15.0f, 20.0f);
+	if (Rotation_Mode == 1) {
+		Cube_Rotation_Angle += Cube_Rotation_Factor * deltaTime;
+		Pyramid_Rotation_Angle += Pyramid_Rotation_Factor * deltaTime;
+	}
+	else if (Rotation_Mode == 2) {
+		Cube_Rotation_Angle -= Cube_Rotation_Factor * deltaTime;
+		Pyramid_Rotation_Angle -= Pyramid_Rotation_Factor * deltaTime;
 	}
 
-	LeftArm_Matrix = glm::translate(glm::mat4(1.0f), Arm_Offset);
-	LeftArm_Matrix = glm::rotate(LeftArm_Matrix, glm::radians(Arm_Rotation_Angle.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	LeftArm_Matrix = glm::translate(LeftArm_Matrix, -Arm_Offset);
+	if (Revolution_Mode == 1) {
+		Light_Revolution_Angle += Light_Revolution_Factor * deltaTime;
+	}
+	else if (Revolution_Mode == 2) {
+		Light_Revolution_Angle -= Light_Revolution_Factor * deltaTime;
+	}
 
-	RightArm_Matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-Arm_Offset.x, Arm_Offset.y, Arm_Offset.z));
-	RightArm_Matrix = glm::rotate(RightArm_Matrix, glm::radians(-Arm_Rotation_Angle.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	RightArm_Matrix = glm::translate(RightArm_Matrix, -glm::vec3(-Arm_Offset.x, Arm_Offset.y, Arm_Offset.z));
+	Custom_OBJ* cubeObject = nullptr;
+	Custom_OBJ* pyramidObject = nullptr;
+	for (auto& file : g_OBJ_Files) {
+		for (auto& object : file.objects) {
+			if (object.name == "Cube") {
+				cubeObject = &object;
+			}
+			else if (object.name == "Pyramid") {
+				pyramidObject = &object;
+			}
+		}
+	}
 
-	LeftLeg_Matrix = glm::translate(glm::mat4(1.0f), Leg_Offset);
-	LeftLeg_Matrix = glm::rotate(LeftLeg_Matrix, glm::radians(Leg_Rotation_Angle.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	LeftLeg_Matrix = glm::translate(LeftLeg_Matrix, -Leg_Offset);
+	Cube_Matrix = glm::mat4(1.0f);
+	if (cubeObject) {
+		glm::mat4 local = glm::mat4(1.0f);
+		local = glm::translate(local, cubeObject->origin);
+		local = glm::rotate(local, glm::radians(Cube_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		local = glm::translate(local, -cubeObject->origin);
+		Cube_Matrix = local;
+	}
 
-	RightLeg_Matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-Leg_Offset.x, Leg_Offset.y, Leg_Offset.z));
-	RightLeg_Matrix = glm::rotate(RightLeg_Matrix, glm::radians(-Leg_Rotation_Angle.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	RightLeg_Matrix = glm::translate(RightLeg_Matrix, -glm::vec3(-Leg_Offset.x, Leg_Offset.y, Leg_Offset.z));
+	Pyramid_Matrix = glm::mat4(1.0f);
+	if (pyramidObject) {
+		glm::mat4 local = glm::mat4(1.0f);
+		local = glm::translate(local, pyramidObject->origin);
+		local = glm::rotate(local, glm::radians(Pyramid_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		local = glm::translate(local, -pyramidObject->origin);
+		Pyramid_Matrix = local;
+	}
+
+	// Light Revolution
+	for (auto& light : g_Lights) {
+		glm::vec4 initPos = glm::vec4(light.init_position, 1.0f);
+		glm::mat4 revolutionMat = glm::mat4(1.0f);
+		revolutionMat = glm::rotate(revolutionMat, glm::radians(Light_Revolution_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		revolutionMat = glm::translate(revolutionMat, Light_Trasform);
+		glm::vec4 rotatedPos = revolutionMat * initPos;
+		light.light_vertex.position = glm::vec3(rotatedPos);
+	
+		if (light.VBO != 0) {
+			glBindBuffer(GL_ARRAY_BUFFER, light.VBO);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex_glm), &light.light_vertex);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
+	}
 }
 
 void GetUniformLocations() {
@@ -782,12 +614,10 @@ void GetUniformLocations() {
 	PerspectiveMatrixID = glGetUniformLocation(shaderProgramID, "Perspective_Matrix");
 	ViewMatrixID = glGetUniformLocation(shaderProgramID, "View_Matrix");
 	ModelMatrixID = glGetUniformLocation(shaderProgramID, "Model_Matrix");
-	BodyMatrixID = glGetUniformLocation(shaderProgramID, "Body_Matrix");
-	LeftArmMatrixID = glGetUniformLocation(shaderProgramID, "LeftArm_Matrix");
-	RightArmMatrixID = glGetUniformLocation(shaderProgramID, "RightArm_Matrix");
-	LeftLegMatrixID = glGetUniformLocation(shaderProgramID, "LeftLeg_Matrix");
-	RightLegMatrixID = glGetUniformLocation(shaderProgramID, "RightLeg_Matrix");
-	DoorMatrixID = glGetUniformLocation(shaderProgramID, "Door_Matrix");
+	CubeMatrixID = glGetUniformLocation(shaderProgramID, "Cube_Matrix");
+	PyramidMatrixID = glGetUniformLocation(shaderProgramID, "Pyramid_Matrix");
+	ViewPosID = glGetUniformLocation(shaderProgramID, "viewPos");
+
 
 	// dynamic uniform variable
 	FigureTypeID = glGetUniformLocation(shaderProgramID, "Figure_Type");
@@ -796,93 +626,85 @@ void UpdateUniformMatrices() {
 	glUniformMatrix4fv(PerspectiveMatrixID, 1, GL_FALSE, &Perspective_Matrix[0][0]);
 	glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &View_Matrix[0][0]);
 	glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model_Matrix[0][0]);
-	glUniformMatrix4fv(BodyMatrixID, 1, GL_FALSE, &Body_Matrix[0][0]);
-	glUniformMatrix4fv(LeftArmMatrixID, 1, GL_FALSE, &LeftArm_Matrix[0][0]);
-	glUniformMatrix4fv(RightArmMatrixID, 1, GL_FALSE, &RightArm_Matrix[0][0]);
-	glUniformMatrix4fv(LeftLegMatrixID, 1, GL_FALSE, &LeftLeg_Matrix[0][0]);
-	glUniformMatrix4fv(RightLegMatrixID, 1, GL_FALSE, &RightLeg_Matrix[0][0]);
-	glUniformMatrix4fv(DoorMatrixID, 1, GL_FALSE, &Door_Matrix[0][0]);
-
+	glUniformMatrix4fv(CubeMatrixID, 1, GL_FALSE, &Cube_Matrix[0][0]);
+	glUniformMatrix4fv(PyramidMatrixID, 1, GL_FALSE, &Pyramid_Matrix[0][0]);
+	glUniform3fv(ViewPosID, 1, &EYE[0]);
 
 	if (PerspectiveMatrixID == -1) std::cerr << "Could not bind uniform Perspective_Matrix\n";
 	if (ViewMatrixID == -1) std::cerr << "Could not bind uniform View_Matrix\n";
 	if (ModelMatrixID == -1) std::cerr << "Could not bind uniform Model_Matrix\n";
-	if (BodyMatrixID == -1) std::cerr << "Could not bind uniform Body_Matrix\n";
-	if (LeftArmMatrixID == -1) std::cerr << "Could not bind uniform LeftArm_Matrix\n";
-	if (RightArmMatrixID == -1) std::cerr << "Could not bind uniform RightArm_Matrix\n";
-	if (LeftLegMatrixID == -1) std::cerr << "Could not bind uniform LeftLeg_Matrix\n";
-	if (RightLegMatrixID == -1) std::cerr << "Could not bind uniform RightLeg_Matrix\n";
-	if (DoorMatrixID == -1) std::cerr << "Could not bind uniform Door_Matrix\n";
-
+	if (CubeMatrixID == -1) std::cerr << "Could not bind uniform Cube_Matrix\n";
+	if (PyramidMatrixID == -1) std::cerr << "Could not bind uniform Pyramid_Matrix\n";
+	if (ViewPosID == -1) std::cerr << "Could not bind uniform viewPos\n";
 
 }
 void ComposeOBJColor() {
 	for (auto& file : g_OBJ_Files) {
 		for (auto& object : file.objects) {
-			if (object.name == "Box") {
-				glm::vec3 faceColors[6] = {
-					glm::vec3(0.6f, 0.6f, 0.6f),
-					glm::vec3(0.2f, 0.2f, 0.2f),
-					glm::vec3(0.6f, 0.6f, 0.6f),
-					glm::vec3(0.2f, 0.2f, 0.2f),
-					glm::vec3(0.4f, 0.4f, 0.4f),
-					glm::vec3(0.4f, 0.4f, 0.4f)
-				};
-
-				int trianglePerFace = 6;
-				for (size_t i = 0; i < object.indices.size(); ++i) {
-					unsigned int faceIndex = i / trianglePerFace;
-					faceIndex = faceIndex % 6;
-					object.vertices[object.indices[i]].color = faceColors[faceIndex];
-				}
-			}
-			else if (object.name == "body") {
-				glm::vec3 bodyColor(0.5f, 0.5f, 0.8f);
+			if (object.name == "Cube") {
+				glm::vec3 bodyColor(0.8f, 0.5f, 0.5f);
 				for (auto& vertex : object.vertices) {
 					vertex.color = bodyColor;
 				}
 			}
-			else if (object.name == "left_arm" || object.name == "right_arm") {
-				glm::vec3 armColor(0.3f, 0.3f, 0.8f);
+			else if (object.name == "Pyramid") {
+				glm::vec3 roofColor(0.5f, 0.8f, 0.5f);
 				for (auto& vertex : object.vertices) {
-					vertex.color = armColor;
-				}
-			}
-			else if (object.name == "left_leg" || object.name == "right_leg") {
-				glm::vec3 legColor(0.8f, 0.3f, 0.3f);
-				for (auto& vertex : object.vertices) {
-					vertex.color = legColor;
-				}
-			}
-			else {
-				// 기타 객체에 대해 무작위 색상 할당
-				glm::vec3 randomColor(urd_0_1(dre), urd_0_1(dre), urd_0_1(dre));
-				for (auto& vertex : object.vertices) {
-					vertex.color = randomColor;
+					vertex.color = roofColor;
 				}
 			}
 		}
 	}
 }
+void ComposeOribit() {
+	// Create Orbit Path
+	std::cout << "Setup Orbit...\n";
+	orbit_vertices.clear();
+	orbit_indices.clear();
+
+	const int orbit_segments = 100;
+	const float orbit_radius = glm::length(Light_Trasform);
+	for (int i = 0; i <= orbit_segments; ++i) {
+		float angle = 2.0f * glm::pi<float>() * static_cast<float>(i) / orbit_segments;
+		Vertex_glm vertex;
+		vertex.position.x = orbit_radius * cos(angle);
+		vertex.position.y = 0.0f;
+		vertex.position.z = orbit_radius * sin(angle);
+		vertex.color = glm::vec3(0.8f, 0.8f, 0.2f);
+		orbit_vertices.push_back(vertex);
+		orbit_indices.push_back(i);
+	}
+
+	glGenVertexArrays(1, &VAO_orbit);
+	glGenBuffers(1, &VBO_orbit);
+	glGenBuffers(1, &IBO_orbit);
+
+	glBindVertexArray(VAO_orbit);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_orbit);
+	glBufferData(GL_ARRAY_BUFFER, orbit_vertices.size() * sizeof(Vertex_glm), orbit_vertices.data(), GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)offsetof(Vertex_glm, position));
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex_glm), (GLvoid*)offsetof(Vertex_glm, color));
+	glEnableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO_orbit);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, orbit_indices.size() * sizeof(unsigned int), orbit_indices.data(), GL_STATIC_DRAW);
+
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+
+}
 
 void Type_distinction(const std::string& object_name, GLuint& outTypeID) {
-	if (object_name == "body") {
-		outTypeID = Figure_Type::BODY;
+	if (object_name == "Cube") {
+		outTypeID = Figure_Type::CUBE;
 	}
-	else if (object_name == "left_arm") {
-		outTypeID = Figure_Type::LEFT_ARM;
-	}
-	else if (object_name == "right_arm") {
-		outTypeID = Figure_Type::RIGHT_ARM;
-	}
-	else if (object_name == "left_leg") {
-		outTypeID = Figure_Type::LEFT_LEG;
-	}
-	else if (object_name == "right_leg") {
-		outTypeID = Figure_Type::RIGHT_LEG;
-	}
-	else if (object_name == "Box") {
-		outTypeID = Figure_Type::BOX;
+	else if (object_name == "Pyramid") {
+		outTypeID = Figure_Type::PYRAMID;
 	}
 	else {
 		outTypeID = Figure_Type::ETC;
