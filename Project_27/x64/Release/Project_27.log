@@ -1,7 +1,24 @@
-﻿  VarANDFunc_03_Shader27.cpp
+﻿  CG_OpenGL_03_Shader27.cpp
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(5,32): warning C4244: '인수': '_Rep'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(5,32): warning C4244:         with
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(5,32): warning C4244:         [
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(5,32): warning C4244:             _Rep=__int64
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(5,32): warning C4244:         ]
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(111,42): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(117,50): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(121,80): warning C4267: '인수': 'size_t'에서 'GLint'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(158,52): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(275,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(282,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(289,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(553,69): warning C4267: '인수': 'size_t'에서 '_Ty'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(553,69): warning C4267:         with
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(553,69): warning C4267:         [
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(553,69): warning C4267:             _Ty=std::seed_seq::result_type
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Project_27\CG_OpenGL_03_Shader27.cpp(553,69): warning C4267:         ]
+  VarANDFunc_03_Shader27.cpp
   코드를 생성하고 있습니다.
-  0 of 973 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  Previous IPDB and IOBJ mismatch, fall back to full compilation.
+  All 999 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
   코드를 생성했습니다.
   Project_27.vcxproj -> C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\x64\Release\Project_27.exe

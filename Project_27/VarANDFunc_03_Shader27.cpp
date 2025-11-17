@@ -25,12 +25,12 @@ int Rotation_Mode{};
 // 0 : stop, 1 : +Y axis, 2 : -Y axis
 int Revolution_Mode{};
 
-GLuint CubeMatrixID{}, PyramidMatrixID{};
-float Cube_Rotation_Angle{}, Pyramid_Rotation_Angle{};
-float Cube_Rotation_Factor{ 50.0f }, Pyramid_Rotation_Factor{ 50.0f };
+GLuint FloorMatrixID{}, TankMatrixID{};
+float Floor_Rotation_Angle{}, Tank_Rotation_Angle{};
+float Floor_Rotation_Factor{ 50.0f }, Tank_Rotation_Factor{ 50.0f };
 
 float Light_Revolution_Angle{}, Light_Revolution_Factor{ 50.0f };
-glm::vec3 Light_Trasform(0.0f, 1.25f, 2.5f);
+glm::vec3 Light_Trasform(0.0f, 5.5f, 20.0f);
 int light_color_template_index{};
 std::vector<glm::vec3> light_color_template = {
 	glm::vec3(1.0f, 1.0f, 1.0f), // White
@@ -38,6 +38,8 @@ std::vector<glm::vec3> light_color_template = {
 	glm::vec3(0.5f, 1.0f, 0.5f), // Green
 	glm::vec3(0.5f, 0.5f, 1.0f), // Blue
 };
+GLuint ShininessID{};
+//float g_shininess{ 32.0f };
 
 int Camera_Rotation_Mode{};
 glm::vec3 Camera_Rotation_Angle(0.0, 0.0, 0.0), Camera_Rotation_Factor(0.0, 15.0, 0.0);
@@ -45,11 +47,11 @@ glm::vec3 Camera_Rotation_Angle(0.0, 0.0, 0.0), Camera_Rotation_Factor(0.0, 15.0
 std::vector<Vertex_glm> Axis_Vertex = {
 	// Positions					// Colors
 	{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f) }, // X axis - Red
-	{ glm::vec3(10.0f, 0.0f, 0.0f),  glm::vec3(1.0f, 0.0f, 0.0f) },
+	{ glm::vec3(15.0f, 0.0f, 0.0f),  glm::vec3(1.0f, 0.0f, 0.0f) },
 	{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) }, // Y axis - Green
-	{ glm::vec3(0.0f, 10.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
+	{ glm::vec3(0.0f, 15.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
 	{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) }, // Z axis - Blue
-	{ glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, 1.0f) }
+	{ glm::vec3(0.0f, 0.0f, 15.0f), glm::vec3(0.0f, 0.0f, 1.0f) }
 };
 std::vector<unsigned int> Axis_Index = {
 	0, 1,

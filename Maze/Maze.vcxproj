@@ -124,6 +124,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalOptions>glew32.lib freeglut.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -136,6 +137,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VarANDFunc_03_Maze.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="OBJ\Figures.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Object>
+    <Object Include="OBJ\Robot.obj" />
+    <Object Include="OBJ\Wall.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

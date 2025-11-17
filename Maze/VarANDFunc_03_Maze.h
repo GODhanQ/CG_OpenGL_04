@@ -25,12 +25,12 @@ extern std::map<int, bool> specialKeyStates;
 
 namespace Figure_Type {
 	const int ORBIT = -3;
-	const int IDK = -2;
+	const int LIGHT = -2;
 	const int AXIS = -1;
 
-	const int LIGHT = 0;
-	const int FLOOR = 1;
-	const int TANK = 2;
+	const int FLOOR = 0;
+	const int TANK = 1;
+	const int WALL = 2;
 
 	const int ETC = 99;
 }
@@ -45,6 +45,7 @@ struct Custom_OBJ {
 	std::string name;
 	std::vector<Vertex_glm> vertices;
 	std::vector<unsigned int> indices;
+	float shininess{ 32.0f };
 	glm::vec3 origin{ 0.0f, 0.0f, 0.0f };
 	GLuint VBO{}, VAO{}, IBO{};
 
@@ -56,26 +57,54 @@ struct OBJ_File {
 };
 
 struct Light {
-	glm::vec3 init_position;
+	glm::vec3 light_color = glm::vec3(1.0f, 1.0f, 1.0f);
 	Vertex_glm light_vertex;
-	glm::vec3 light_color;
-	glm::vec3 strength;
-	GLuint VAO{}, VBO{}, IBO{};
-	unsigned int indices{ 0 };
-	GLuint LightPosID{}, LightColorID{}, LightStrengthID{};
+	glm::vec3 init_position;
 
-	Light() {
-		init_position = glm::vec3(0.0f, 0.0f, 0.0f);
-		light_vertex.position = init_position;
-		light_vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
-		light_color = glm::vec3(1.0f, 1.0f, 1.0f);
-		strength = glm::vec3(1.0f, 1.0f, 1.0f);
+	// 감쇠 계수
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
+
+	// 빛의 세기 추가
+	float intensity;
+
+	GLuint VAO = 0, VBO = 0, IBO = 0;
+
+	Light(glm::vec3 pos = glm::vec3(0.0, 1.0, 0.0),
+		float inten = 1.0f) : init_position(pos), intensity(inten) {
+		light_vertex.position = pos;
+		light_vertex.color = light_color;
+		light_vertex.normal = glm::vec3(0.0, 1.0, 0.0);
 	}
 };
 
 struct AABB {
 	glm::vec3 min;
 	glm::vec3 max;
+};
+
+extern float WallMaxHeight;
+extern bool ScaleWallHeight;
+struct Maze {
+	int width, height;
+	std::vector<std::vector<int>> grid;
+	std::vector<std::vector<float>> wallHeights;
+
+	int startX = 1, startY = 1;
+	int endX = 1, endY = 1;
+
+	int enterPointX = 1, enterPointY = 0;
+	int exitPointX = 1, exitPointY = 2;
+
+	Maze(int M, int N) {
+		if (M <= 0) M = 1;
+		if (N <= 0) N = 1;
+		width = 2 * M + 1;
+		height = 2 * N + 1;
+		grid.assign(height, std::vector<int>(width, 1));
+		wallHeights.assign(height, std::vector<float>(width, WallMaxHeight));
+	}
 };
 
 extern GLint Window_width, Window_height;
@@ -97,22 +126,22 @@ extern GLuint ModelMatrixID;
 extern glm::vec3 Model_Transform, Model_Scale;
 extern int Rotation_Mode, Revolution_Mode;
 
-extern GLuint CubeMatrixID, PyramidMatrixID;
-extern float Cube_Rotation_Angle, Pyramid_Rotation_Angle;
-extern float Cube_Rotation_Factor, Pyramid_Rotation_Factor;
+extern GLuint FloorMatrixID, TankMatrixID;
+extern float Floor_Rotation_Angle, Tank_Rotation_Angle;
+extern float Floor_Rotation_Factor, Tank_Rotation_Factor;
 
 extern float Light_Revolution_Angle, Light_Revolution_Factor;
 extern glm::vec3 Light_Trasform;
 extern std::vector<glm::vec3> light_color_template;
 extern int light_color_template_index;
+extern GLuint ShininessID;
 
 extern int Camera_Rotation_Mode;
 extern glm::vec3 Camera_Rotation_Angle, Camera_Rotation_Factor;
 
-
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
-void DrawModels();
+void DrawModels(float deltaTime);
 
 void KeyBoard(unsigned char key, int x, int y);
 void KeyBoardUp(unsigned char key, int x, int y);
@@ -128,7 +157,7 @@ GLuint make_shaderProgram(const char* vertPath, const char* fragPath);
 bool ReadObj(const std::string& path, OBJ_File& outFile);
 
 void MakeStaticMatrix();
-void MakeDynamicMatrix();
+void MakeDynamicMatrix(float deltaTime);
 
 void GetUniformLocations();
 void UpdateUniformMatrices();
@@ -142,3 +171,5 @@ AABB TransformAABB(const AABB& aabb, const glm::mat4& transform);
 bool CheckCollision(const AABB& a, const AABB& b);
 bool IsAABBInside(const AABB& inner, const AABB& outer);
 bool CheckAABBCollision(const AABB& a, const AABB& b);
+
+Maze MakeMaze(int N, int M);

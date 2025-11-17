@@ -6,9 +6,9 @@ std::default_random_engine dre(seed);
 std::uniform_real_distribution<float> urd_0_1(0.0f, 1.0f);
 std::uniform_int_distribution<int> uid_0_3(0, 3);
 
-glm::mat4 Perspective_Matrix(1.0f), View_Matrix;
+glm::mat4 Perspective_Matrix(1.0f), View_Matrix(1.0f);
 glm::mat4 Model_Matrix(1.0f);
-glm::mat4 Cube_Matrix(1.0f), Pyramid_Matrix(1.0f);
+glm::mat4 Floor_Matrix(1.0f), Tank_Matrix(1.0f);
 
 std::vector<OBJ_File> g_OBJ_Files;
 std::map<std::string, AABB> g_LocalAABBs; // 객체별 로컬 AABB 저장
@@ -88,12 +88,13 @@ GLvoid drawScene() {
 	// 1. Main Viewport
 	glViewport(0, 0, width, height);
 	Perspective_Matrix = glm::perspective(FOV, AspectRatio, NearClip, FarClip);
-	View_Matrix = glm::lookAt(EYE, AT, UP);
+	//Perspective_Matrix = glm::ortho(-50.0f, 50.0f, -50.0f * (float)height / (float)width, 50.0f * (float)height / (float)width, NearClip, FarClip);
+
+	// 2. Update Uniform Matrices
 	UpdateUniformMatrices();
 
-	// Draw Models
+	// 3. Draw Models
 	DrawModels();
-
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -115,53 +116,48 @@ void DrawModels() {
 	glLineWidth(1.0f);
 	glDrawElements(GL_LINE_STRIP, orbit_indices.size(), GL_UNSIGNED_INT, 0);
 
-	// Draw Light Source
-	for (auto& light : g_Lights) {
-		glBindVertexArray(light.VAO);
+	// Draw Light Source & Set Light Uniforms
+	if (Light_On) {
+		glUniform1i(glGetUniformLocation(shaderProgramID, "numLights"), g_Lights.size());
+		for (int i = 0; i < g_Lights.size(); ++i) {
+			auto& light = g_Lights[i];
 
-		glUniform1i(FigureTypeID, Figure_Type::LIGHT);
-		glPointSize(5.0f);
+			// Uniforms 설정
+			glm::vec3 lightPos_world = light.light_vertex.position;
+			std::string baseName = "lights[" + std::to_string(i) + "]";
+			glUniform3fv(glGetUniformLocation(shaderProgramID, (baseName + ".position").c_str()), 1, &lightPos_world[0]);
+			glUniform3fv(glGetUniformLocation(shaderProgramID, (baseName + ".color").c_str()), 1, &light.light_color[0]);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".constant").c_str()), light.constant);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".linear").c_str()), light.linear);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".quadratic").c_str()), light.quadratic);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".intensity").c_str()), light.intensity);
 
-		if (light.LightPosID != -1) {
-			light.LightPosID = glGetUniformLocation(shaderProgramID, "lightPos");
-			light.LightColorID = glGetUniformLocation(shaderProgramID, "lightColor");
+			// 광원 그리기
+			glBindVertexArray(light.VAO);
+			glUniform1i(FigureTypeID, Figure_Type::LIGHT); // LIGHT 타입 설정
+			glPointSize(5.0f);
+			glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0); // 각 광원을 루프 안에서 그림
 		}
-		
-		if (Light_On) {
-			glm::vec4 lightPos_world_vec4 = Model_Matrix * glm::vec4(light.light_vertex.position, 1.0f);
-			glm::vec3 lightPos_world = glm::vec3(lightPos_world_vec4);
-
-			glUniform3fv(light.LightPosID, 1, &lightPos_world[0]);
-			glUniform3fv(light.LightColorID, 1, &light.light_color[0]);
-		}
-		else {
-			glUniform3f(light.LightPosID, 0.0f, 0.0f, 0.0f);
-			glUniform3f(light.LightColorID, 0.0f, 0.0f, 0.0f);
-		}
-		
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0);
-
 	}
+	else {
+		glUniform1i(glGetUniformLocation(shaderProgramID, "numLights"), 0);
+	}
+	//glUniform1f(ShininessID, g_shininess);
 
 	// Draw OBJ Models
-	int box_face_count = 0;
 	for (const auto& file : g_OBJ_Files) {
 		for (const auto& object : file.objects) {
-			/*if ((Draw_Cube && object.name.find("Cube") == std::string::npos) ||
-				(!Draw_Cube && object.name.find("Pyramid") == std::string::npos)) {
-				continue;
-			}*/
 			glBindVertexArray(object.VAO);
 
-			GLuint Figure_Type;
-			glm::mat4 Matrix(1.0f);
-			Type_distinction(object.name, Figure_Type);
-			glUniform1i(FigureTypeID, Figure_Type);
+			GLuint currentFigureType;
+			Type_distinction(object.name, currentFigureType);
+			glUniform1i(FigureTypeID, currentFigureType);
+
+			glUniform1f(ShininessID, object.shininess);
 
 			glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_INT, 0);
 		}
 	}
-
 }
 
 void KeyBoard(unsigned char key, int x, int y) {
@@ -215,20 +211,48 @@ void KeyBoard(unsigned char key, int x, int y) {
 		
 		break;
 
+	case 'k':
+		// 이제 키보드로는 특정 객체의 shininess를 조절하거나,
+		// 모든 객체를 순회하며 변경해야 합니다.
+		for (auto& file : g_OBJ_Files) {
+			for (auto& object : file.objects) {
+				if (object.name == "Tank") { // 예: Tank만 조절
+					object.shininess *= 2.0f;
+					std::cout << "Tank Shininess: " << object.shininess << std::endl;
+				}
+			}
+		}
+		break;
+	case 'K':
+		for (auto& file : g_OBJ_Files) {
+			for (auto& object : file.objects) {
+				if (object.name == "Tank") {
+					object.shininess /= 2.0f;
+					if (object.shininess < 1.0f) object.shininess = 1.0f;
+					std::cout << "Tank Shininess: " << object.shininess << std::endl;
+				}
+			}
+		}
+		break;
+
 	case 'x':
 		EYE.x += 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 
 		break;
 	case 'X':
 		EYE.x -= 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 		
 		break;
 	case 'z':
 		EYE.z += 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 
 		break;
 	case 'Z':
 		EYE.z -= 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 
 		break;
 	case 'r':
@@ -325,7 +349,20 @@ void INIT_BUFFER() {
 
 	// Create Light Source Buffers
 	Light light1;
+	light1.intensity = 1.0f;
 	g_Lights.push_back(light1);
+
+	Light light2(glm::vec3(20.0f, 5.5f, -20.0f));
+	light2.intensity = 5.0f;
+	g_Lights.push_back(light2);
+
+	Light light3(glm::vec3(-20.0f, 5.5f, -20.0f));
+	light3.intensity = 10.0f;
+	g_Lights.push_back(light3);
+
+	Light light4(glm::vec3(0.0f, 5.5f, -40.0f));
+	light4.intensity = 20.0f;
+	g_Lights.push_back(light4);
 
 	for (auto& light : g_Lights) {
 		glGenVertexArrays(1, &light.VAO);
@@ -565,7 +602,6 @@ void MakeDynamicMatrix() {
 	lastTime = currentTime;
 
 	// Camera Rotation
-	// AT is always looking (0,0,0)
 	glm::vec4 EYE_vec4 = glm::vec4(EYE, 1.0f);
 	if (Camera_Rotation_Mode == 1) {
 		glm::mat4 rotationMat = glm::mat4(1.0f);
@@ -580,6 +616,9 @@ void MakeDynamicMatrix() {
 		EYE = glm::vec3(rotatedEYE);
 	}
 
+	View_Matrix = glm::lookAt(EYE, AT, UP);
+
+
 	Model_Scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
 	Model_Matrix = glm::mat4(1.0f);
@@ -587,12 +626,12 @@ void MakeDynamicMatrix() {
 	Model_Matrix = glm::translate(Model_Matrix, Model_Transform);
 
 	if (Rotation_Mode == 1) {
-		Cube_Rotation_Angle += Cube_Rotation_Factor * deltaTime;
-		Pyramid_Rotation_Angle += Pyramid_Rotation_Factor * deltaTime;
+		Floor_Rotation_Angle += Floor_Rotation_Factor * deltaTime;
+		Tank_Rotation_Angle += Tank_Rotation_Factor * deltaTime;
 	}
 	else if (Rotation_Mode == 2) {
-		Cube_Rotation_Angle -= Cube_Rotation_Factor * deltaTime;
-		Pyramid_Rotation_Angle -= Pyramid_Rotation_Factor * deltaTime;
+		Floor_Rotation_Angle -= Floor_Rotation_Factor * deltaTime;
+		Tank_Rotation_Angle -= Tank_Rotation_Factor * deltaTime;
 	}
 
 	if (Revolution_Mode == 1) {
@@ -615,22 +654,22 @@ void MakeDynamicMatrix() {
 		}
 	}
 
-	Cube_Matrix = glm::mat4(1.0f);
+	Floor_Matrix = glm::mat4(1.0f);
 	if (cubeObject) {
 		glm::mat4 local = glm::mat4(1.0f);
 		local = glm::translate(local, cubeObject->origin);
-		local = glm::rotate(local, glm::radians(Cube_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		local = glm::rotate(local, glm::radians(Floor_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
 		local = glm::translate(local, -cubeObject->origin);
-		Cube_Matrix = local;
+		Floor_Matrix = local;
 	}
 
-	Pyramid_Matrix = glm::mat4(1.0f);
+	Tank_Matrix = glm::mat4(1.0f);
 	if (pyramidObject) {
 		glm::mat4 local = glm::mat4(1.0f);
 		local = glm::translate(local, pyramidObject->origin);
-		local = glm::rotate(local, glm::radians(Pyramid_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		local = glm::rotate(local, glm::radians(Tank_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
 		local = glm::translate(local, -pyramidObject->origin);
-		Pyramid_Matrix = local;
+		Tank_Matrix = local;
 	}
 
 	// Light Revolution
@@ -655,10 +694,10 @@ void GetUniformLocations() {
 	PerspectiveMatrixID = glGetUniformLocation(shaderProgramID, "Perspective_Matrix");
 	ViewMatrixID = glGetUniformLocation(shaderProgramID, "View_Matrix");
 	ModelMatrixID = glGetUniformLocation(shaderProgramID, "Model_Matrix");
-	CubeMatrixID = glGetUniformLocation(shaderProgramID, "Cube_Matrix");
-	PyramidMatrixID = glGetUniformLocation(shaderProgramID, "Pyramid_Matrix");
+	FloorMatrixID = glGetUniformLocation(shaderProgramID, "Floor_Matrix");
+	TankMatrixID = glGetUniformLocation(shaderProgramID, "Tank_Matrix");
 	ViewPosID = glGetUniformLocation(shaderProgramID, "viewPos");
-
+	ShininessID = glGetUniformLocation(shaderProgramID, "shininess");
 
 	// dynamic uniform variable
 	FigureTypeID = glGetUniformLocation(shaderProgramID, "Figure_Type");
@@ -667,15 +706,15 @@ void UpdateUniformMatrices() {
 	glUniformMatrix4fv(PerspectiveMatrixID, 1, GL_FALSE, &Perspective_Matrix[0][0]);
 	glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &View_Matrix[0][0]);
 	glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model_Matrix[0][0]);
-	glUniformMatrix4fv(CubeMatrixID, 1, GL_FALSE, &Cube_Matrix[0][0]);
-	glUniformMatrix4fv(PyramidMatrixID, 1, GL_FALSE, &Pyramid_Matrix[0][0]);
+	glUniformMatrix4fv(FloorMatrixID, 1, GL_FALSE, &Floor_Matrix[0][0]);
+	glUniformMatrix4fv(TankMatrixID, 1, GL_FALSE, &Tank_Matrix[0][0]);
 	glUniform3fv(ViewPosID, 1, &EYE[0]);
 
 	if (PerspectiveMatrixID == -1) std::cerr << "Could not bind uniform Perspective_Matrix\n";
 	if (ViewMatrixID == -1) std::cerr << "Could not bind uniform View_Matrix\n";
 	if (ModelMatrixID == -1) std::cerr << "Could not bind uniform Model_Matrix\n";
-	if (CubeMatrixID == -1) std::cerr << "Could not bind uniform Cube_Matrix\n";
-	if (PyramidMatrixID == -1) std::cerr << "Could not bind uniform Pyramid_Matrix\n";
+	if (FloorMatrixID == -1) std::cerr << "Could not bind uniform Cube_Matrix\n";
+	if (TankMatrixID == -1) std::cerr << "Could not bind uniform Pyramid_Matrix\n";
 	if (ViewPosID == -1) std::cerr << "Could not bind uniform viewPos\n";
 
 }
@@ -693,6 +732,7 @@ void ComposeOBJColor() {
 				for (auto& vertex : object.vertices) {
 					vertex.color = roofColor;
 				}
+				object.shininess = 128.0f;
 			}
 		}
 	}

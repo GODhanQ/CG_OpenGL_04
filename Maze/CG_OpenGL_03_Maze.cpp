@@ -1,14 +1,14 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "VarANDFunc_03_Shader27.h"
+#include "VarANDFunc_03_Maze.h"
 
 auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 std::default_random_engine dre(seed);
 std::uniform_real_distribution<float> urd_0_1(0.0f, 1.0f);
 std::uniform_int_distribution<int> uid_0_3(0, 3);
 
-glm::mat4 Perspective_Matrix(1.0f), View_Matrix;
+glm::mat4 Perspective_Matrix(1.0f), View_Matrix(1.0f);
 glm::mat4 Model_Matrix(1.0f);
-glm::mat4 Cube_Matrix(1.0f), Pyramid_Matrix(1.0f);
+glm::mat4 Floor_Matrix(1.0f), Tank_Matrix(1.0f);
 
 std::vector<OBJ_File> g_OBJ_Files;
 std::map<std::string, AABB> g_LocalAABBs; // 객체별 로컬 AABB 저장
@@ -18,13 +18,15 @@ std::vector<Light> g_Lights;
 std::vector<Vertex_glm> orbit_vertices;
 std::vector<unsigned int> orbit_indices;
 
+Maze g_Maze(1, 1);
+
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowPosition(500, 50);
+	glutInitWindowPosition(50, 50);
 	glutInitWindowSize(Window_width, Window_height);
-	glutCreateWindow("Example27");
+	glutCreateWindow("Maze");
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
@@ -79,8 +81,13 @@ GLvoid drawScene() {
 	glClearColor(rColor, gColor, bColor, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	static auto lastTime = std::chrono::high_resolution_clock::now();
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTime).count();
+	lastTime = currentTime;
+
 	glUseProgram(shaderProgramID);
-	MakeDynamicMatrix();
+	MakeDynamicMatrix(deltaTime);
 
 	int width = glutGet(GLUT_WINDOW_WIDTH);
 	int height = glutGet(GLUT_WINDOW_HEIGHT);
@@ -88,12 +95,13 @@ GLvoid drawScene() {
 	// 1. Main Viewport
 	glViewport(0, 0, width, height);
 	Perspective_Matrix = glm::perspective(FOV, AspectRatio, NearClip, FarClip);
-	View_Matrix = glm::lookAt(EYE, AT, UP);
+	//Perspective_Matrix = glm::ortho(-50.0f, 50.0f, -50.0f * (float)height / (float)width, 50.0f * (float)height / (float)width, NearClip, FarClip);
+
+	// 2. Update Uniform Matrices
 	UpdateUniformMatrices();
 
-	// Draw Models
-	DrawModels();
-
+	// 3. Draw Models
+	DrawModels(deltaTime);
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -102,7 +110,7 @@ GLvoid Reshape(int w, int h) {
 	MakeStaticMatrix();
 	glUniformMatrix4fv(PerspectiveMatrixID, 1, GL_FALSE, &Perspective_Matrix[0][0]);
 }
-void DrawModels() {
+void DrawModels(float deltaTime) {
 	// Draw Axis
 	glBindVertexArray(VAO_axis);
 	glUniform1i(FigureTypeID, Figure_Type::AXIS);
@@ -115,69 +123,152 @@ void DrawModels() {
 	glLineWidth(1.0f);
 	glDrawElements(GL_LINE_STRIP, orbit_indices.size(), GL_UNSIGNED_INT, 0);
 
-	// Draw Light Source
-	for (auto& light : g_Lights) {
-		glBindVertexArray(light.VAO);
+	// Draw Light Source & Set Light Uniforms
+	if (Light_On) {
+		glUniform1i(glGetUniformLocation(shaderProgramID, "numLights"), g_Lights.size());
+		for (int i = 0; i < g_Lights.size(); ++i) {
+			auto& light = g_Lights[i];
 
-		glUniform1i(FigureTypeID, Figure_Type::LIGHT);
-		glPointSize(5.0f);
+			// Uniforms 설정
+			glm::vec3 lightPos_world = light.light_vertex.position;
+			std::string baseName = "lights[" + std::to_string(i) + "]";
+			glUniform3fv(glGetUniformLocation(shaderProgramID, (baseName + ".position").c_str()), 1, &lightPos_world[0]);
+			glUniform3fv(glGetUniformLocation(shaderProgramID, (baseName + ".color").c_str()), 1, &light.light_color[0]);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".constant").c_str()), light.constant);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".linear").c_str()), light.linear);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".quadratic").c_str()), light.quadratic);
+			glUniform1f(glGetUniformLocation(shaderProgramID, (baseName + ".intensity").c_str()), light.intensity);
 
-		if (light.LightPosID != -1) {
-			light.LightPosID = glGetUniformLocation(shaderProgramID, "lightPos");
-			light.LightColorID = glGetUniformLocation(shaderProgramID, "lightColor");
+			// 광원 그리기
+			glBindVertexArray(light.VAO);
+			glUniform1i(FigureTypeID, Figure_Type::LIGHT); // LIGHT 타입 설정
+			glPointSize(5.0f);
+			glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0); // 각 광원을 루프 안에서 그림
 		}
-		
-		if (Light_On) {
-			glm::vec4 lightPos_world_vec4 = Model_Matrix * glm::vec4(light.light_vertex.position, 1.0f);
-			glm::vec3 lightPos_world = glm::vec3(lightPos_world_vec4);
+	}
+	else {
+		glUniform1i(glGetUniformLocation(shaderProgramID, "numLights"), 0);
+	}
+	//glUniform1f(ShininessID, g_shininess);
 
-			glUniform3fv(light.LightPosID, 1, &lightPos_world[0]);
-			glUniform3fv(light.LightColorID, 1, &light.light_color[0]);
+	// Draw Maze Walls
+	const Custom_OBJ* wallObject = nullptr;
+	for (const auto& file : g_OBJ_Files) {
+		for (const auto& object : file.objects) {
+			if (object.name == "Wall") {
+				wallObject = &object;
+				break;
+			}
 		}
-		else {
-			glUniform3f(light.LightPosID, 0.0f, 0.0f, 0.0f);
-			glUniform3f(light.LightColorID, 0.0f, 0.0f, 0.0f);
-		}
-		
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0);
+		if (wallObject) break;
+	}
 
+	if (wallObject) {
+		glBindVertexArray(wallObject->VAO);
+		glUniform1f(ShininessID, wallObject->shininess);
+
+		GLuint wallFigureType;
+		Type_distinction("Wall", wallFigureType);
+		glUniform1i(FigureTypeID, wallFigureType);
+
+		AABB wallAABB = g_LocalAABBs.at("Wall");
+		glm::vec3 wallSize = wallAABB.max - wallAABB.min;
+
+		for (int i = 0; i < g_Maze.height; ++i) {
+			for (int j = 0; j < g_Maze.width; ++j) {
+				if (g_Maze.grid[i][j] == 1) {
+					glm::mat4 wallModelMatrix = glm::mat4(1.0f);
+					// 미로의 중앙을 (0,0,0)으로 맞추기 위해 오프셋 계산
+					float x_offset = -g_Maze.width * wallSize.x / 2.0f;
+					float z_offset = -g_Maze.height * wallSize.z / 2.0f;
+
+					float height_scale = WallMaxHeight;
+					if (ScaleWallHeight) {
+						const float pi = 3.141592f;
+						const float animation_speed = 2.0f * urd_0_1(dre); // 애니메이션 속도 조절
+						float& theta = g_Maze.wallHeights[i][j]; // 각 벽의 현재 각도(theta)
+
+						// theta 값을 시간에 따라 계속 증가시킴
+						theta += animation_speed * deltaTime;
+						if (theta > 2.0f * pi) {
+							theta -= 2.0f * pi;
+						}
+
+						// cos(theta)를 사용하여 -1 ~ 1 범위의 값을 얻고, 이를 0 ~ 1 범위로 변환
+						float cos_value = cos(theta);
+						float normalized_height = (cos_value + 1.0f) * 0.5f; // 0.0 ~ 1.0 범위
+
+						// 최종 높이를 1.0(기본 크기) ~ WallMaxHeight 사이로 매핑
+						height_scale = 1.0f + (WallMaxHeight - 1.0f) * normalized_height;
+					}
+
+					glm::vec3 scale = glm::vec3(1.0f, height_scale, 1.0f);
+					glm::vec3 position(j * wallSize.x + x_offset, 0.0f, i * wallSize.z + z_offset);
+					wallModelMatrix = glm::scale(wallModelMatrix, scale);
+					wallModelMatrix = glm::translate(wallModelMatrix, position);
+
+
+
+					glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &wallModelMatrix[0][0]);
+					glDrawElements(GL_TRIANGLES, wallObject->indices.size(), GL_UNSIGNED_INT, 0);
+					//std::cout << "Create Wall at : ( " << i << ", " << j << " )" << '\n';
+				}
+				else {
+					continue;
+				}
+			}
+		}
+		// 원래 ModelMatrix로 복원
+		glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model_Matrix[0][0]);
 	}
 
 	// Draw OBJ Models
-	int box_face_count = 0;
 	for (const auto& file : g_OBJ_Files) {
 		for (const auto& object : file.objects) {
-			/*if ((Draw_Cube && object.name.find("Cube") == std::string::npos) ||
-				(!Draw_Cube && object.name.find("Pyramid") == std::string::npos)) {
+			if (!object.name.find("Tank") ||
+				!object.name.find("Wall") ) {
 				continue;
-			}*/
+			}
 			glBindVertexArray(object.VAO);
 
-			GLuint Figure_Type;
-			glm::mat4 Matrix(1.0f);
-			Type_distinction(object.name, Figure_Type);
-			glUniform1i(FigureTypeID, Figure_Type);
+			GLuint currentFigureType;
+			Type_distinction(object.name, currentFigureType);
+			glUniform1i(FigureTypeID, currentFigureType);
+
+			glUniform1f(ShininessID, object.shininess);
 
 			glDrawElements(GL_TRIANGLES, object.indices.size(), GL_UNSIGNED_INT, 0);
 		}
 	}
-
 }
 
 void KeyBoard(unsigned char key, int x, int y) {
 	keyStates[key] = true;
 	switch (key) {
-	case 'n':
-		Draw_Cube = !Draw_Cube;
-
-		std::cout << (Draw_Cube ? "Draw Cube\n" : "Draw Pyramid\n");
-		break;
 	case 'm':
-		Light_On = !Light_On;
+		ScaleWallHeight = !ScaleWallHeight;
+		if (ScaleWallHeight) {
+			for (int i = 0; i < g_Maze.height; ++i) {
+				for (int j = 0; j < g_Maze.width; ++j) {
+					g_Maze.wallHeights[i][j] = glm::max(urd_0_1(dre) * WallMaxHeight, 1.0f);
+				}
+			}
+		}
+		else {
+			for (int i = 0; i < g_Maze.height; ++i) {
+				for (int j = 0; j < g_Maze.width; ++j) {
+					g_Maze.wallHeights[i][j] = WallMaxHeight;
+				}
+			}
 
-		std::cout << (Light_On ? "Light On\n" : "Light Off\n");
+		}
+
+		std::cout << "Wall Height Scaling: " << (ScaleWallHeight ? "ON\n" : "OFF\n");
 		break;
-	case 'y':
+	case 'M':
+
+		break;
+	case 'j':
 		Revolution_Mode = (Revolution_Mode + 1) % 3;
 
 		if (Revolution_Mode == 0)
@@ -215,26 +306,82 @@ void KeyBoard(unsigned char key, int x, int y) {
 		
 		break;
 
+	case 'k':
+		// 이제 키보드로는 특정 객체의 shininess를 조절하거나,
+		// 모든 객체를 순회하며 변경해야 합니다.
+		for (auto& file : g_OBJ_Files) {
+			for (auto& object : file.objects) {
+				if (object.name == "Tank") { // 예: Tank만 조절
+					object.shininess *= 2.0f;
+					std::cout << "Tank Shininess: " << object.shininess << std::endl;
+				}
+			}
+		}
+		break;
+	case 'K':
+		for (auto& file : g_OBJ_Files) {
+			for (auto& object : file.objects) {
+				if (object.name == "Tank") {
+					object.shininess /= 2.0f;
+					if (object.shininess < 1.0f) object.shininess = 1.0f;
+					std::cout << "Tank Shininess: " << object.shininess << std::endl;
+				}
+			}
+		}
+		break;
+
 	case 'x':
 		EYE.x += 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 
 		break;
 	case 'X':
 		EYE.x -= 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 		
 		break;
 	case 'z':
 		EYE.z += 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 
 		break;
 	case 'Z':
 		EYE.z -= 1.0f;
+		View_Matrix = glm::lookAt(EYE, AT, UP);
 
 		break;
-	case 'r':
+	case ' ':
+		if (glutGetModifiers() == GLUT_ACTIVE_SHIFT) {
+			// SHIFT + SPACEBAR: 카메라 아래로 이동
+			EYE.y -= 1.0f;
+		}
+		else {
+			// SPACEBAR: 카메라 위로 이동
+			EYE.y += 1.0f;
+		}
+		View_Matrix = glm::lookAt(EYE, AT, UP);
+		break;
+	case 'y':
 		Camera_Rotation_Mode = (Camera_Rotation_Mode + 1) % 3;
 
 		break;
+
+	case 'r':
+		// make a new maze
+		int rows, cols;
+		std::cout << "Enter number of rows and columns for the maze (e.g., 5 5): ";
+		std::cin >> rows >> cols;
+
+		g_Maze = MakeMaze(rows, cols);
+		for (int i = 0; i < g_Maze.height; ++i) {
+			for (int j = 0; j < g_Maze.width; ++j) {
+				std::cout << (g_Maze.grid[i][j] == 1 ? "#" : " ");
+			}
+			std::cout << "\n";
+		}
+		std::cout << "Generated a new maze of size " << rows << "x" << cols << ".\n";
+		break;
+	
 	case 'q':
 		exit(0);
 
@@ -280,6 +427,7 @@ std::pair<float, float> ConvertScreenToOpenGL(int screen_x, int screen_y) {
 void INIT_BUFFER() {
 	std::vector<std::string> obj_filenames = {
 		"Figures.obj",
+		"Wall.obj",
 	};
 
 	for (const auto& filename : obj_filenames) {
@@ -324,8 +472,21 @@ void INIT_BUFFER() {
 	glBindVertexArray(0);
 
 	// Create Light Source Buffers
-	Light light1;
+	Light light1(glm::vec3(0.0f, 5.5f, 0.0f));
+	light1.intensity = 5.0f;
 	g_Lights.push_back(light1);
+
+	Light light2(glm::vec3(20.0f, 5.5f, -20.0f));
+	light2.intensity = 5.0f;
+	g_Lights.push_back(light2);
+
+	Light light3(glm::vec3(-20.0f, 5.5f, -20.0f));
+	light3.intensity = 5.0f;
+	g_Lights.push_back(light3);
+
+	Light light4(glm::vec3(0.0f, 5.5f, -40.0f));
+	light4.intensity = 5.0f;
+	g_Lights.push_back(light4);
 
 	for (auto& light : g_Lights) {
 		glGenVertexArrays(1, &light.VAO);
@@ -522,11 +683,14 @@ bool ReadObj(const std::string& path, OBJ_File& outFile) {
 				pushVertex(vertexIndex[2], normalIndex[2]);
 			}
 			else if (matches == 12) { // 사각형 -> 삼각형 2개로 분할
-				unsigned int v_indices[] = { 0, 1, 2, 0, 2, 3 };
-				for (int i = 0; i < 6; ++i) {
-					int idx = v_indices[i];
-					pushVertex(vertexIndex[idx], normalIndex[idx]);
-				}
+				// 0, 1, 2
+				pushVertex(vertexIndex[0], normalIndex[0]);
+				pushVertex(vertexIndex[1], normalIndex[1]);
+				pushVertex(vertexIndex[2], normalIndex[2]);
+				// 0, 2, 3
+				pushVertex(vertexIndex[0], normalIndex[0]);
+				pushVertex(vertexIndex[2], normalIndex[2]);
+				pushVertex(vertexIndex[3], normalIndex[3]);
 			}
 			else {
 				// 다른 형식의 면 데이터는 현재 파서에서 지원하지 않음
@@ -557,15 +721,8 @@ bool ReadObj(const std::string& path, OBJ_File& outFile) {
 void MakeStaticMatrix() {
 	Perspective_Matrix = glm::perspective(FOV, AspectRatio, NearClip, FarClip);
 }
-void MakeDynamicMatrix() {
-	// delta time
-	static auto lastTime = std::chrono::high_resolution_clock::now();
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - lastTime).count();
-	lastTime = currentTime;
-
+void MakeDynamicMatrix(float deltaTime) {
 	// Camera Rotation
-	// AT is always looking (0,0,0)
 	glm::vec4 EYE_vec4 = glm::vec4(EYE, 1.0f);
 	if (Camera_Rotation_Mode == 1) {
 		glm::mat4 rotationMat = glm::mat4(1.0f);
@@ -580,6 +737,9 @@ void MakeDynamicMatrix() {
 		EYE = glm::vec3(rotatedEYE);
 	}
 
+	View_Matrix = glm::lookAt(EYE, AT, UP);
+
+
 	Model_Scale = glm::vec3(5.0f, 5.0f, 5.0f);
 
 	Model_Matrix = glm::mat4(1.0f);
@@ -587,12 +747,12 @@ void MakeDynamicMatrix() {
 	Model_Matrix = glm::translate(Model_Matrix, Model_Transform);
 
 	if (Rotation_Mode == 1) {
-		Cube_Rotation_Angle += Cube_Rotation_Factor * deltaTime;
-		Pyramid_Rotation_Angle += Pyramid_Rotation_Factor * deltaTime;
+		Floor_Rotation_Angle += Floor_Rotation_Factor * deltaTime;
+		Tank_Rotation_Angle += Tank_Rotation_Factor * deltaTime;
 	}
 	else if (Rotation_Mode == 2) {
-		Cube_Rotation_Angle -= Cube_Rotation_Factor * deltaTime;
-		Pyramid_Rotation_Angle -= Pyramid_Rotation_Factor * deltaTime;
+		Floor_Rotation_Angle -= Floor_Rotation_Factor * deltaTime;
+		Tank_Rotation_Angle -= Tank_Rotation_Factor * deltaTime;
 	}
 
 	if (Revolution_Mode == 1) {
@@ -615,22 +775,22 @@ void MakeDynamicMatrix() {
 		}
 	}
 
-	Cube_Matrix = glm::mat4(1.0f);
+	Floor_Matrix = glm::mat4(1.0f);
 	if (cubeObject) {
 		glm::mat4 local = glm::mat4(1.0f);
 		local = glm::translate(local, cubeObject->origin);
-		local = glm::rotate(local, glm::radians(Cube_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		local = glm::rotate(local, glm::radians(Floor_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
 		local = glm::translate(local, -cubeObject->origin);
-		Cube_Matrix = local;
+		Floor_Matrix = local;
 	}
 
-	Pyramid_Matrix = glm::mat4(1.0f);
+	Tank_Matrix = glm::mat4(1.0f);
 	if (pyramidObject) {
 		glm::mat4 local = glm::mat4(1.0f);
 		local = glm::translate(local, pyramidObject->origin);
-		local = glm::rotate(local, glm::radians(Pyramid_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+		local = glm::rotate(local, glm::radians(Tank_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
 		local = glm::translate(local, -pyramidObject->origin);
-		Pyramid_Matrix = local;
+		Tank_Matrix = local;
 	}
 
 	// Light Revolution
@@ -655,10 +815,10 @@ void GetUniformLocations() {
 	PerspectiveMatrixID = glGetUniformLocation(shaderProgramID, "Perspective_Matrix");
 	ViewMatrixID = glGetUniformLocation(shaderProgramID, "View_Matrix");
 	ModelMatrixID = glGetUniformLocation(shaderProgramID, "Model_Matrix");
-	CubeMatrixID = glGetUniformLocation(shaderProgramID, "Cube_Matrix");
-	PyramidMatrixID = glGetUniformLocation(shaderProgramID, "Pyramid_Matrix");
+	FloorMatrixID = glGetUniformLocation(shaderProgramID, "Floor_Matrix");
+	TankMatrixID = glGetUniformLocation(shaderProgramID, "Tank_Matrix");
 	ViewPosID = glGetUniformLocation(shaderProgramID, "viewPos");
-
+	ShininessID = glGetUniformLocation(shaderProgramID, "shininess");
 
 	// dynamic uniform variable
 	FigureTypeID = glGetUniformLocation(shaderProgramID, "Figure_Type");
@@ -667,15 +827,15 @@ void UpdateUniformMatrices() {
 	glUniformMatrix4fv(PerspectiveMatrixID, 1, GL_FALSE, &Perspective_Matrix[0][0]);
 	glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &View_Matrix[0][0]);
 	glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model_Matrix[0][0]);
-	glUniformMatrix4fv(CubeMatrixID, 1, GL_FALSE, &Cube_Matrix[0][0]);
-	glUniformMatrix4fv(PyramidMatrixID, 1, GL_FALSE, &Pyramid_Matrix[0][0]);
+	glUniformMatrix4fv(FloorMatrixID, 1, GL_FALSE, &Floor_Matrix[0][0]);
+	glUniformMatrix4fv(TankMatrixID, 1, GL_FALSE, &Tank_Matrix[0][0]);
 	glUniform3fv(ViewPosID, 1, &EYE[0]);
 
 	if (PerspectiveMatrixID == -1) std::cerr << "Could not bind uniform Perspective_Matrix\n";
 	if (ViewMatrixID == -1) std::cerr << "Could not bind uniform View_Matrix\n";
 	if (ModelMatrixID == -1) std::cerr << "Could not bind uniform Model_Matrix\n";
-	if (CubeMatrixID == -1) std::cerr << "Could not bind uniform Cube_Matrix\n";
-	if (PyramidMatrixID == -1) std::cerr << "Could not bind uniform Pyramid_Matrix\n";
+	if (FloorMatrixID == -1) std::cerr << "Could not bind uniform Cube_Matrix\n";
+	if (TankMatrixID == -1) std::cerr << "Could not bind uniform Pyramid_Matrix\n";
 	if (ViewPosID == -1) std::cerr << "Could not bind uniform viewPos\n";
 
 }
@@ -693,6 +853,14 @@ void ComposeOBJColor() {
 				for (auto& vertex : object.vertices) {
 					vertex.color = roofColor;
 				}
+				object.shininess = 128.0f;
+			}
+			else if (object.name == "Wall") {
+				glm::vec3 brickColor(0.72f, 0.37f, 0.28f);
+				for (auto& vertex : object.vertices) {
+					vertex.color = brickColor;
+				}
+				object.shininess = 1.0f;
 			}
 		}
 	}
@@ -749,7 +917,98 @@ void Type_distinction(const std::string& object_name, GLuint& outTypeID) {
 	else if (object_name == "Tank") {
 		outTypeID = Figure_Type::TANK;
 	}
+	else if (object_name == "Wall") {
+		outTypeID = Figure_Type::WALL;
+	}
 	else {
 		outTypeID = Figure_Type::ETC;
 	}
+}
+
+Maze MakeMaze(int N, int M) {
+	if (N <= 0) N = 1;
+	if (M <= 0) M = 1;
+	Maze maze(M, N);
+	std::vector<int> sets(M, 0);
+	int next_set = 1;
+
+	std::uniform_real_distribution<float> urd(0.0f, 1.0f);
+
+	for (int i = 0; i < N; ++i) {
+		// 1. 아직 집합에 속하지 않은 셀에 새 집합 할당
+		for (int j = 0; j < M; ++j) {
+			if (sets[j] == 0) {
+				sets[j] = next_set++;
+			}
+		}
+
+		// 2. 오른쪽 벽 생성
+		for (int j = 0; j < M - 1; ++j) {
+			bool create_wall = true;
+			if (sets[j] != sets[j + 1]) {
+				if (i == N - 1 || urd(dre) > 0.5f) {
+					create_wall = false;
+				}
+			}
+
+			if (!create_wall) {
+				int old_set = sets[j + 1];
+				for (int k = 0; k < M; ++k) {
+					if (sets[k] == old_set) {
+						sets[k] = sets[j];
+					}
+				}
+				maze.grid[2 * i + 1][2 * (j + 1)] = 0; // 통로
+			}
+		}
+
+		// 3. 아래쪽 벽 생성
+		if (i < N - 1) {
+			std::map<int, std::vector<int>> set_members;
+			for (int j = 0; j < M; ++j) {
+				set_members[sets[j]].push_back(j);
+			}
+
+			for (auto const& [set_id, members] : set_members) {
+				int passages = 0;
+				std::vector<int> shuffled_members = members;
+				std::shuffle(shuffled_members.begin(), shuffled_members.end(), dre);
+
+				for (int member_idx : shuffled_members) {
+					if (passages < members.size() - 1 && urd(dre) > 0.5f) {
+						// 벽 유지
+					}
+					else {
+						maze.grid[2 * (i + 1)][2 * member_idx + 1] = 0; // 통로
+						passages++;
+					}
+				}
+				if (passages == 0) {
+					int rand_member_idx = shuffled_members[0];
+					maze.grid[2 * (i + 1)][2 * rand_member_idx + 1] = 0;
+				}
+			}
+		}
+
+		// 4. 다음 행 준비
+		for (int j = 0; j < M; ++j) {
+			maze.grid[2 * i + 1][2 * j + 1] = 0; // 셀 위치는 항상 통로
+			if (i < N - 1 && maze.grid[2 * (i + 1)][2 * j + 1] == 1) {
+				sets[j] = 0;
+			}
+		}
+	}
+
+	// 시작점 설정
+	maze.grid[maze.startY][maze.startX] = 0;
+	// 입구 설정
+	maze.grid[maze.enterPointY][maze.enterPointX] = 0;
+
+	// 출구 설정: 마지막 셀 아래에 출구 생성
+	maze.exitPointX = 2 * (M - 1) + 1;
+	maze.exitPointY = 2 * N;
+	maze.grid[maze.exitPointY][maze.exitPointX] = 0;
+
+
+	return maze;
 }

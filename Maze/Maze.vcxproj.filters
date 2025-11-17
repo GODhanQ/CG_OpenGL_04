@@ -35,4 +35,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Object Include="OBJ\Figures.obj">
+      <Filter>리소스 파일</Filter>
+    </Object>
+    <Object Include="OBJ\Robot.obj">
+      <Filter>리소스 파일</Filter>
+    </Object>
+    <Object Include="OBJ\Wall.obj">
+      <Filter>리소스 파일</Filter>
+    </Object>
+  </ItemGroup>
 </Project>

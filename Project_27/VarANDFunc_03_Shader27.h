@@ -25,12 +25,11 @@ extern std::map<int, bool> specialKeyStates;
 
 namespace Figure_Type {
 	const int ORBIT = -3;
-	const int IDK = -2;
+	const int LIGHT = -2;
 	const int AXIS = -1;
 
-	const int LIGHT = 0;
-	const int FLOOR = 1;
-	const int TANK = 2;
+	const int FLOOR = 0;
+	const int TANK = 1;
 
 	const int ETC = 99;
 }
@@ -45,6 +44,7 @@ struct Custom_OBJ {
 	std::string name;
 	std::vector<Vertex_glm> vertices;
 	std::vector<unsigned int> indices;
+	float shininess{ 32.0f };
 	glm::vec3 origin{ 0.0f, 0.0f, 0.0f };
 	GLuint VBO{}, VAO{}, IBO{};
 
@@ -56,27 +56,25 @@ struct OBJ_File {
 };
 
 struct Light {
-	glm::vec3 init_position;
+	glm::vec3 light_color = glm::vec3(1.0f, 1.0f, 1.0f);
 	Vertex_glm light_vertex;
-	glm::vec3 light_color;
-	glm::vec3 strength;
-	GLuint VAO{}, VBO{}, IBO{};
-	unsigned int indices{ 0 };
-	GLuint LightPosID{}, LightColorID{}, LightStrengthID{};
+	glm::vec3 init_position;
 
-	Light() {
-		init_position = glm::vec3(0.0f, 0.0f, 0.0f);
-		light_vertex.position = init_position;
-		light_vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
-		light_color = glm::vec3(1.0f, 1.0f, 1.0f);
-		strength = glm::vec3(1.0f, 1.0f, 1.0f);
-	}
-	Light(glm::vec3 initPos) {
-		init_position = initPos;
-		light_vertex.position = init_position;
-		light_vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
-		light_color = glm::vec3(1.0f, 1.0f, 1.0f);
-		strength = glm::vec3(1.0f, 1.0f, 1.0f);
+	// 감쇠 계수
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
+
+	// 빛의 세기 추가
+	float intensity;
+
+	GLuint VAO = 0, VBO = 0, IBO = 0;
+
+	Light(glm::vec3 pos = glm::vec3(0.0, 1.0, 0.0),
+		float inten = 1.0f) : init_position(pos), intensity(inten) {
+		light_vertex.position = pos;
+		light_vertex.color = light_color;
+		light_vertex.normal = glm::vec3(0.0, 1.0, 0.0);
 	}
 };
 
@@ -104,14 +102,16 @@ extern GLuint ModelMatrixID;
 extern glm::vec3 Model_Transform, Model_Scale;
 extern int Rotation_Mode, Revolution_Mode;
 
-extern GLuint CubeMatrixID, PyramidMatrixID;
-extern float Cube_Rotation_Angle, Pyramid_Rotation_Angle;
-extern float Cube_Rotation_Factor, Pyramid_Rotation_Factor;
+extern GLuint FloorMatrixID, TankMatrixID;
+extern float Floor_Rotation_Angle, Tank_Rotation_Angle;
+extern float Floor_Rotation_Factor, Tank_Rotation_Factor;
 
 extern float Light_Revolution_Angle, Light_Revolution_Factor;
 extern glm::vec3 Light_Trasform;
 extern std::vector<glm::vec3> light_color_template;
 extern int light_color_template_index;
+extern GLuint ShininessID;
+//extern float g_shininess;
 
 extern int Camera_Rotation_Mode;
 extern glm::vec3 Camera_Rotation_Angle, Camera_Rotation_Factor;
