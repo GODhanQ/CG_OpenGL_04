@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowPosition(500, 50);
 	glutInitWindowSize(Window_width, Window_height);
-	glutCreateWindow("Example25");
+	glutCreateWindow("Example26");
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();
