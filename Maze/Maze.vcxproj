@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{7df8c97b-97d9-4e73-915e-a2e397a84ac4}</ProjectGuid>
-    <RootNamespace>Project27</RootNamespace>
+    <ProjectGuid>{a4850f17-45a5-4205-9707-965ba8590d48}</ProjectGuid>
+    <RootNamespace>Maze</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -124,24 +124,18 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalOptions>glew32.lib freeglut.lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CG_OpenGL_03_Shader27.cpp" />
-    <ClCompile Include="VarANDFunc_03_Shader27.cpp" />
+    <ClCompile Include="CG_OpenGL_03_Maze.cpp" />
+    <ClCompile Include="VarANDFunc_03_Maze.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Fragment_Shader.glsl" />
     <None Include="Vertex_Shader.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VarANDFunc_03_Shader27.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="OBJ\Figures.obj">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </Object>
+    <ClInclude Include="VarANDFunc_03_Maze.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

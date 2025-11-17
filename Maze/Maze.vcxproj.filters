@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CG_OpenGL_03_Shader27.cpp">
+    <ClCompile Include="CG_OpenGL_03_Maze.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="VarANDFunc_03_Shader27.cpp">
+    <ClCompile Include="VarANDFunc_03_Maze.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -31,13 +31,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="VarANDFunc_03_Shader27.h">
+    <ClInclude Include="VarANDFunc_03_Maze.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="OBJ\Figures.obj">
-      <Filter>리소스 파일</Filter>
-    </Object>
   </ItemGroup>
 </Project>

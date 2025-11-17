@@ -71,13 +71,6 @@ struct Light {
 		light_color = glm::vec3(1.0f, 1.0f, 1.0f);
 		strength = glm::vec3(1.0f, 1.0f, 1.0f);
 	}
-	Light(glm::vec3 initPos) {
-		init_position = initPos;
-		light_vertex.position = init_position;
-		light_vertex.color = glm::vec3(1.0f, 1.0f, 1.0f);
-		light_color = glm::vec3(1.0f, 1.0f, 1.0f);
-		strength = glm::vec3(1.0f, 1.0f, 1.0f);
-	}
 };
 
 struct AABB {
