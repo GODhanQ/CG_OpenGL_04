@@ -46,4 +46,9 @@
       <Filter>리소스 파일</Filter>
     </Object>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="README.txt">
+      <Filter>리소스 파일</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

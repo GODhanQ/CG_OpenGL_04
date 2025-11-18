@@ -10,10 +10,10 @@ bool keyStates[256] = { false, };
 std::map<int, bool> specialKeyStates;
 
 
-glm::vec3 EYE(0.0f, 30.0f, 50.0f), AT(0.0f, 5.0f, 0.0f), UP(0.0f, 1.0f, 0.0f);
+glm::vec3 EYE(0.0f, 30.0f, 50.0f), AT(0.0f, 10.0f, 0.0f), UP(0.0f, 1.0f, 0.0f);
 glm::vec3 Camera_Transform(0.0f, 0.0f, 0.0f), Camera_Transform_Factor(0.0f, 0.0f, 0.0f);
 GLuint PerspectiveMatrixID{}, ViewMatrixID, ViewPosID{};
-float FOV{ 45.0f }, AspectRatio{ (float)Window_width / (float)Window_height }, NearClip{ 0.1f }, FarClip{ 150.0f };
+float FOV{ 45.0f }, AspectRatio{ (float)Window_width / (float)Window_height }, NearClip{ 0.1f }, FarClip{ 250.0f };
 
 GLuint FigureTypeID{};
 bool Draw_Cube{ true }, Light_On{ true };
@@ -29,8 +29,11 @@ GLuint FloorMatrixID{}, TankMatrixID{};
 float Floor_Rotation_Angle{}, Tank_Rotation_Angle{};
 float Floor_Rotation_Factor{ 50.0f }, Tank_Rotation_Factor{ 50.0f };
 
+GLuint WallMatrixID{};
+float animation_speed_factor{ 1.0f };
+
 float Light_Revolution_Angle{}, Light_Revolution_Factor{ 50.0f };
-glm::vec3 Light_Trasform(0.0f, 5.5f, 20.0f);
+glm::vec3 Light_Trasform(0.0f, 0.0f, 0.0f);
 int light_color_template_index{};
 std::vector<glm::vec3> light_color_template = {
 	glm::vec3(1.0f, 1.0f, 1.0f), // White
@@ -43,9 +46,24 @@ GLuint ShininessID{};
 
 int Camera_Rotation_Mode{};
 glm::vec3 Camera_Rotation_Angle(0.0, 0.0, 0.0), Camera_Rotation_Factor(0.0, 15.0, 0.0);
+bool Perspective_On{ true };
 
 float WallMaxHeight{ 5.0f };
 bool ScaleWallHeight{ false };
+
+GLuint RobotMatrixID{};
+bool RobotInWorld{ false }, RobotThirdPersonView{ true };
+glm::vec3 Robot_Position = glm::vec3(0.0f), Robot_Scale = glm::vec3(0.2f);
+float Robot_Rotation_Y = 0.0f;
+glm::vec3 Robot_Direction(0.0f, 0.0f, 0.0f);	// Robot의 진행 방향 벡터
+float Robot_Speed{ 3.0f };						// Robot의 이동 속도
+float Robot_Walk_Speed{ Robot_Speed }, Robot_Run_Speed{ 2.0f * Robot_Speed };
+
+bool MouseLookMode = false;
+float Camera_Pitch = 0.0f;
+int LastMouseX = 0, LastMouseY = 0;
+bool FirstMouse = true;
+float MouseSensitivity = 0.05f;
 
 std::vector<Vertex_glm> Axis_Vertex = {
 	// Positions					// Colors
@@ -139,3 +157,4 @@ bool CheckAABBCollision(const AABB& a, const AABB& b) {
 		(a.min.y <= b.max.y && a.max.y >= b.min.y) &&
 		(a.min.z <= b.max.z && a.max.z >= b.min.z);
 }
+

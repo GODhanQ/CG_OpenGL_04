@@ -24,6 +24,7 @@ extern bool keyStates[256];
 extern std::map<int, bool> specialKeyStates;
 
 namespace Figure_Type {
+	const int NONE = -4;
 	const int ORBIT = -3;
 	const int LIGHT = -2;
 	const int AXIS = -1;
@@ -31,6 +32,7 @@ namespace Figure_Type {
 	const int FLOOR = 0;
 	const int TANK = 1;
 	const int WALL = 2;
+	const int ROBOT = 3;
 
 	const int ETC = 99;
 }
@@ -103,7 +105,7 @@ struct Maze {
 		width = 2 * M + 1;
 		height = 2 * N + 1;
 		grid.assign(height, std::vector<int>(width, 1));
-		wallHeights.assign(height, std::vector<float>(width, WallMaxHeight));
+		wallHeights.assign(height, std::vector<float>(width, 1));
 	}
 };
 
@@ -130,6 +132,9 @@ extern GLuint FloorMatrixID, TankMatrixID;
 extern float Floor_Rotation_Angle, Tank_Rotation_Angle;
 extern float Floor_Rotation_Factor, Tank_Rotation_Factor;
 
+extern GLuint WallMatrixID;
+extern float animation_speed_factor;
+
 extern float Light_Revolution_Angle, Light_Revolution_Factor;
 extern glm::vec3 Light_Trasform;
 extern std::vector<glm::vec3> light_color_template;
@@ -138,6 +143,22 @@ extern GLuint ShininessID;
 
 extern int Camera_Rotation_Mode;
 extern glm::vec3 Camera_Rotation_Angle, Camera_Rotation_Factor;
+extern bool Perspective_On;
+
+extern GLuint RobotMatrixID;
+extern bool RobotInWorld, RobotThirdPersonView;
+extern glm::vec3 Robot_Position;	// Robot의 월드 좌표
+extern glm::vec3 Robot_Scale;		// Robot의 스케일
+extern float Robot_Rotation_Y;		// Robot의 Y축 회전 각도
+extern glm::vec3 Robot_Direction;	// Robot의 진행 방향 벡터
+extern float Robot_Speed;			// Robot의 이동 속도
+extern float Robot_Walk_Speed, Robot_Run_Speed;
+
+extern bool MouseLookMode;
+extern float Camera_Pitch;
+extern int LastMouseX, LastMouseY;
+extern bool FirstMouse;
+extern float MouseSensitivity;
 
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
@@ -148,6 +169,7 @@ void KeyBoardUp(unsigned char key, int x, int y);
 void SpecialKeyBoard(int key, int x, int y);
 void SpecialKeyBoardUp(int key, int x, int y);
 void MouseClick(int button, int state, int x, int y);
+void MouseMotion(int x, int y);
 std::pair<float, float> ConvertScreenToOpenGL(int screen_x, int screen_y);
 
 void INIT_BUFFER();
@@ -163,6 +185,7 @@ void GetUniformLocations();
 void UpdateUniformMatrices();
 void ComposeOBJColor();
 void ComposeOribit();
+void MakeLightSources();
 
 void Type_distinction(const std::string& name, GLuint& FigureTypeID);
 
@@ -171,5 +194,9 @@ AABB TransformAABB(const AABB& aabb, const glm::mat4& transform);
 bool CheckCollision(const AABB& a, const AABB& b);
 bool IsAABBInside(const AABB& inner, const AABB& outer);
 bool CheckAABBCollision(const AABB& a, const AABB& b);
+AABB CalculateRobotAABB();
+
+bool CheckRobotWallCollision(const glm::vec3& newPosition);
 
 Maze MakeMaze(int N, int M);
+void MakeRobotAtMazeEntrance();
