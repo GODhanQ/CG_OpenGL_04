@@ -1,6 +1,6 @@
 #include "VarANDFunc_03_Maze.h"
 
-GLint Window_width{ 1200 }, Window_height{ 675 };
+GLint Window_width{ 1920 }, Window_height{ 1080 };
 
 GLuint shaderProgramID{}, vertexShader{}, fragmentShader{};
 
@@ -64,6 +64,8 @@ float Camera_Pitch = 0.0f;
 int LastMouseX = 0, LastMouseY = 0;
 bool FirstMouse = true;
 float MouseSensitivity = 0.05f;
+
+bool WaitingForMazeInput = false;
 
 std::vector<Vertex_glm> Axis_Vertex = {
 	// Positions					// Colors

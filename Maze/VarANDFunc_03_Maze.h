@@ -160,6 +160,8 @@ extern int LastMouseX, LastMouseY;
 extern bool FirstMouse;
 extern float MouseSensitivity;
 
+extern bool WaitingForMazeInput;
+
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);
 void DrawModels(float deltaTime);
@@ -200,3 +202,6 @@ bool CheckRobotWallCollision(const glm::vec3& newPosition);
 
 Maze MakeMaze(int N, int M);
 void MakeRobotAtMazeEntrance();
+
+void RenderText(const char* text, float x, float y, void* font = GLUT_BITMAP_HELVETICA_12);
+void DisplayParameters(float deltaTime);

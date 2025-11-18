@@ -13,20 +13,20 @@ glm::mat4 Wall_Matrix(1.0f);
 glm::mat4 Robot_Matrix(1.0f);
 
 std::vector<OBJ_File> g_OBJ_Files;
-std::map<std::string, AABB> g_LocalAABBs; // 객체별 로컬 AABB 저장
+std::map<std::string, AABB> g_LocalAABBs;
 
 GLuint VAO_orbit, VBO_orbit, IBO_orbit;;
 std::vector<Light> g_Lights;
 std::vector<Vertex_glm> orbit_vertices;
 std::vector<unsigned int> orbit_indices;
 
-Maze g_Maze(1, 1);
+Maze g_Maze(0, 0);
 
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowPosition(50, 50);
+	glutInitWindowPosition(0, 0);
 	glutInitWindowSize(Window_width, Window_height);
 	glutCreateWindow("Maze");
 
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	g_Maze = MakeMaze(9, 9);
+	//g_Maze = MakeMaze(9, 9);
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(Reshape);
@@ -143,13 +143,17 @@ GLvoid drawScene() {
 
 		glPointSize(5.0f);
 		glBegin(GL_POINTS);
-		glColor3f(1.0f, 0.0f, 0.0f); // 빨간색
+		glColor3f(1.0f, 0.0f, 0.0f);
 		glVertex3f(robot_world_pos.x, 15.0f, robot_world_pos.z);
 		glEnd();
 
 		glEnable(GL_DEPTH_TEST);
 		glUseProgram(shaderProgramID);
 	}
+
+	// 3. Display Parameters (전체 화면 기준)
+	glViewport(0, 0, width, height);
+	DisplayParameters(deltaTime);
 
 	glBindVertexArray(0);
 	glutSwapBuffers();
@@ -189,9 +193,9 @@ void DrawModels(float deltaTime) {
 
 			// 광원 그리기
 			glBindVertexArray(light.VAO);
-			glUniform1i(FigureTypeID, Figure_Type::LIGHT); // LIGHT 타입 설정
+			glUniform1i(FigureTypeID, Figure_Type::LIGHT);
 			glPointSize(5.0f);
-			glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0); // 각 광원을 루프 안에서 그림
+			glDrawElements(GL_POINTS, 1, GL_UNSIGNED_INT, 0); 
 		}
 	}
 	else {
@@ -361,22 +365,19 @@ void KeyBoard(unsigned char key, int x, int y) {
 
 	case 'k':
 		for (auto& file : g_OBJ_Files) {
+			if (file.file_name != "Robot.obj") continue;
 			for (auto& object : file.objects) {
-				if (object.name == "Tank") {
-					object.shininess *= 2.0f;
-					std::cout << "Tank Shininess: " << object.shininess << std::endl;
-				}
+				object.shininess *= 2.0f;
+				std::cout << "Robot Shininess: " << object.shininess << std::endl;
 			}
 		}
 		break;
 	case 'K':
 		for (auto& file : g_OBJ_Files) {
+			if (file.file_name != "Robot.obj") continue;
 			for (auto& object : file.objects) {
-				if (object.name == "Tank") {
-					object.shininess /= 2.0f;
-					if (object.shininess < 1.0f) object.shininess = 1.0f;
-					std::cout << "Tank Shininess: " << object.shininess << std::endl;
-				}
+				object.shininess /= 2.0f;
+				std::cout << "Robot Shininess: " << object.shininess << std::endl;
 			}
 		}
 		break;
@@ -410,10 +411,26 @@ void KeyBoard(unsigned char key, int x, int y) {
 		Camera_Rotation_Mode = (Camera_Rotation_Mode + 1) % 3;
 		break;
 
-	case 'r':
+	case 'r': {
+		WaitingForMazeInput = true;
+
+		drawScene();
+		glFlush();
+
 		int rows, cols;
-		std::cout << "Enter number of rows and columns for the maze (e.g., 5 5): ";
+		std::cout << "Range of rows and columns: 5 to 25\n";
+		std::cout << "Enter number of rows and columns for the maze (e.g., 9 9): ";
 		std::cin >> rows >> cols;
+		if (rows <= 4 || cols <= 4) {
+			rows = 5;
+			cols = 5;
+		}
+		else if (rows > 25 || cols > 25) {
+			rows = 25;
+			cols = 25;
+		}
+
+		WaitingForMazeInput = false;
 
 		g_Maze = MakeMaze(rows, cols);
 		for (int i = 0; i < g_Maze.height; ++i) {
@@ -422,8 +439,12 @@ void KeyBoard(unsigned char key, int x, int y) {
 			}
 			std::cout << "\n";
 		}
+		RobotInWorld = true;
+		MakeRobotAtMazeEntrance();
+
 		std::cout << "Generated a new maze of size " << rows << "x" << cols << ".\n";
 		break;
+	}
 	case '+':
 		animation_speed_factor *= 1.2f;
 
@@ -463,7 +484,6 @@ void KeyBoard(unsigned char key, int x, int y) {
 		break;
 	case 'q':
 		exit(0);
-
 	default:
 		break;
 	}
@@ -496,13 +516,9 @@ void KeyBoard(unsigned char key, int x, int y) {
 void KeyBoardUp(unsigned char key, int x, int y) {
 	keyStates[key] = false;
 
-	if (RobotInWorld) {
-		switch (key) {
-		case 'w':
-		case 's':
-		case 'a':
-		case 'd': {
-			// 키 상태를 기반으로 방향 벡터 재계산
+	if (key == 'w' || key == 's' || key == 'a' || key == 'd') {
+		if (RobotInWorld) {
+			// 방향 벡터 재계산
 			Robot_Direction = glm::vec3(0.0f);
 			if (keyStates['w']) Robot_Direction.z += 1.0f;
 			if (keyStates['s']) Robot_Direction.z -= 1.0f;
@@ -516,10 +532,9 @@ void KeyBoardUp(unsigned char key, int x, int y) {
 			else {
 				Robot_Direction = glm::vec3(0.0f);
 			}
-			break;
 		}
-		default:
-			break;
+		else {
+			Robot_Direction = glm::vec3(0.0f);
 		}
 	}
 }
@@ -529,6 +544,7 @@ void SpecialKeyBoard(int key, int x, int y) {
 }
 void SpecialKeyBoardUp(int key, int x, int y) {
 	specialKeyStates[key] = false;
+
 }
 void MouseClick(int button, int state, int x, int y) {
 	// 마우스 휠 버튼 클릭으로 마우스 룩 모드 토글
@@ -537,16 +553,14 @@ void MouseClick(int button, int state, int x, int y) {
 		FirstMouse = true;
 
 		if (MouseLookMode) {
-			// 마우스 커서 숨기기
 			glutSetCursor(GLUT_CURSOR_NONE);
-			// 마우스를 중앙으로 초기 이동
+			
 			int centerX = glutGet(GLUT_WINDOW_WIDTH) / 2;
 			int centerY = glutGet(GLUT_WINDOW_HEIGHT) / 2;
 			glutWarpPointer(centerX, centerY);
 			std::cout << "Mouse Look Mode: ON (Middle Click)\n";
 		}
 		else {
-			// 마우스 커서 보이기
 			glutSetCursor(GLUT_CURSOR_INHERIT);
 			std::cout << "Mouse Look Mode: OFF (Middle Click)\n";
 		}
@@ -560,7 +574,7 @@ void MouseMotion(int x, int y) {
 	int centerX = width / 2;
 	int centerY = height / 2;
 
-	// 첫 마우스 입력 무시 (초기화)
+	// 첫 마우스 입력 무시
 	if (FirstMouse) {
 		LastMouseX = centerX;
 		LastMouseY = centerY;
@@ -568,30 +582,24 @@ void MouseMotion(int x, int y) {
 		return;
 	}
 
-	// 마우스 이동량 계산
 	int deltaX = x - centerX;
 	int deltaY = y - centerY;
 
-	// 너무 작은 움직임은 무시
 	if (abs(deltaX) < 2 && abs(deltaY) < 2) {
 		return;
 	}
 
-	// 전역 변수 MouseSensitivity 사용
-	float yaw = -deltaX * MouseSensitivity;     // 로봇 좌우 회전
-	float pitch = -deltaY * MouseSensitivity;   // 카메라 상하 회전만
+	float yaw = -deltaX * MouseSensitivity;
+	float pitch = -deltaY * MouseSensitivity;
 
-	// 로봇은 Y축 회전만
 	Robot_Rotation_Y += yaw;
 	if (Robot_Rotation_Y > 360.0f) Robot_Rotation_Y -= 360.0f;
 	if (Robot_Rotation_Y < 0.0f) Robot_Rotation_Y += 360.0f;
 
-	// 카메라 pitch만 업데이트 (로봇은 회전 안함)
 	Camera_Pitch += pitch;
 	if (Camera_Pitch > 89.0f) Camera_Pitch = 89.0f;
 	if (Camera_Pitch < -89.0f) Camera_Pitch = -89.0f;
 
-	// 마우스를 화면 중앙으로 재배치
 	glutWarpPointer(centerX, centerY);
 }
 std::pair<float, float> ConvertScreenToOpenGL(int screen_x, int screen_y) {
@@ -676,6 +684,174 @@ void INIT_BUFFER() {
 	glBindVertexArray(0);
 
 	ComposeOribit();
+}
+
+void RenderText(const char* text, float x, float y, void* font) {
+	glUseProgram(0); // 쉐이더 비활성화
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(0, glutGet(GLUT_WINDOW_WIDTH), 0, glutGet(GLUT_WINDOW_HEIGHT));
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+
+	glColor3f(1.0f, 1.0f, 1.0f); // 흰색
+	glRasterPos2f(x, y);
+
+	for (const char* c = text; *c != '\0'; c++) {
+		glutBitmapCharacter(font, *c);
+	}
+
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+
+	glUseProgram(shaderProgramID); // 쉐이더 재활성화
+}
+void DisplayParameters(float deltaTime) {
+	glDisable(GL_DEPTH_TEST);
+
+	int height = glutGet(GLUT_WINDOW_HEIGHT);
+	int width = glutGet(GLUT_WINDOW_WIDTH);
+	float yPos = height - 20; // 상단에서 20픽셀 아래부터 시작
+	float lineHeight = 15;    // 줄 간격
+
+	char buffer[256];
+
+	if (WaitingForMazeInput) {
+		char inputPrompt[256];
+		sprintf(inputPrompt, "Enter Maze Size in Console");
+
+		float centerX = width / 2.0f - 120.0f;
+		float centerY = height / 2.0f;
+
+		glUseProgram(0);
+		glDisable(GL_DEPTH_TEST);
+
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		gluOrtho2D(0, width, 0, height);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4f(0.0f, 0.0f, 0.0f, 0.7f);
+		glBegin(GL_QUADS);
+		glVertex2f(centerX - 20, centerY - 30);
+		glVertex2f(centerX + 290, centerY - 30);
+		glVertex2f(centerX + 290, centerY + 30);
+		glVertex2f(centerX - 20, centerY + 30);
+		glEnd();
+		glDisable(GL_BLEND);
+
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glRasterPos2f(centerX, centerY);
+		for (const char* c = inputPrompt; *c != '\0'; c++) {
+			glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, *c);
+		}
+
+		glColor3f(1.0f, 1.0f, 1.0f);
+		char subText[] = "(Check Console Window)";
+		glRasterPos2f(centerX + 20, centerY - 20);
+		for (const char* c = subText; *c != '\0'; c++) {
+			glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c);
+		}
+
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+		glMatrixMode(GL_MODELVIEW);
+
+		glEnable(GL_DEPTH_TEST);
+		glUseProgram(shaderProgramID);
+
+		return;
+	}
+
+	// FPS
+	sprintf(buffer, "FPS: %.1f", 1.0f / deltaTime);
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Projection Mode
+	sprintf(buffer, "Projection: %s", Perspective_On ? "Perspective" : "Orthographic");
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Light Revolution
+	const char* revolutionState = (Revolution_Mode == 0) ? "Stopped" :
+		(Revolution_Mode == 1) ? "+Y Axis" : "-Y Axis";
+	sprintf(buffer, "Light Revolution: %s", revolutionState);
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Camera Rotation
+	const char* cameraRotState = (Camera_Rotation_Mode == 0) ? "Stopped" :
+		(Camera_Rotation_Mode == 1) ? "+Y Axis" : "-Y Axis";
+	sprintf(buffer, "Camera Rotation: %s", cameraRotState);
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Wall Animation
+	sprintf(buffer, "Wall Height Animation: %s", ScaleWallHeight ? "ON" : "OFF");
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Animation Speed Factor
+	sprintf(buffer, "Animation Speed: %.2fx", animation_speed_factor);
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Maze Size
+	sprintf(buffer, "Maze Size: %dx%d", g_Maze.width, g_Maze.height);
+	RenderText(buffer, 10, yPos);
+	yPos -= lineHeight;
+
+	// Robot Info
+	if (RobotInWorld) {
+		yPos -= lineHeight * 0.5f;
+
+		sprintf(buffer, "=== ROBOT INFO ===");
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+
+		sprintf(buffer, "Position: (%.1f, %.1f, %.1f)",
+			Robot_Position.x, Robot_Position.y, Robot_Position.z);
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+
+		sprintf(buffer, "Rotation: %.1f deg", Robot_Rotation_Y);
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+
+		sprintf(buffer, "View Mode: %s", RobotThirdPersonView ? "3rd Person" : "1st Person");
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+
+		sprintf(buffer, "Speed: %.1f (Shift: %.1f)", Robot_Walk_Speed, Robot_Run_Speed);
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+
+		sprintf(buffer, "Mouse Look: %s", MouseLookMode ? "ON" : "OFF");
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+	}
+	else {
+		yPos -= lineHeight * 0.5f;
+		sprintf(buffer, "Robot: Not in World (Press 'f')");
+		RenderText(buffer, 10, yPos);
+		yPos -= lineHeight;
+	}
+
+	glEnable(GL_DEPTH_TEST);
 }
 
 char* filetobuf(const char* file)
@@ -838,7 +1014,7 @@ bool ReadObj(const std::string& path, OBJ_File& outFile) {
 			else {
 				// 다른 형식의 면 데이터는 현재 파서에서 지원하지 않음
 				char buffer[1024];
-				fgets(buffer, 1024, file); // 해당 라인의 나머지를 읽고 무시
+				fgets(buffer, 1024, file);
 			}
 
 			// calculate origin
@@ -867,14 +1043,14 @@ void MakeStaticMatrix() {
 void MakeDynamicMatrix(float deltaTime) {
 	// Robot Direction Reset if no movement keys are pressed
 	// 가끔 이동	키를 모두 떼었을 때 방향 벡터가 남아있는 경우 방지
-	if (keyStates['w'] == false &&
-		keyStates['s'] == false &&
-		keyStates['a'] == false &&
-		keyStates['d'] == false) {
+	bool anyKeyPressed = keyStates['w'] || keyStates['s'] ||
+		keyStates['a'] || keyStates['d'];
+
+	if (!RobotInWorld || !anyKeyPressed) {
 		Robot_Direction = glm::vec3(0.0f);
 	}
 
-	// Robot Movement - 먼저 이동 처리
+	// Robot Movement
 	if (RobotInWorld && glm::length(Robot_Direction) > 0.01f) {
 		float rad = glm::radians(Robot_Rotation_Y);
 		glm::mat3 rotationMatrix = glm::mat3(
@@ -909,7 +1085,7 @@ void MakeDynamicMatrix(float deltaTime) {
 		float yaw_rad = glm::radians(Robot_Rotation_Y);
 		float pitch_rad = glm::radians(Camera_Pitch);
 
-		// 카메라 시야 방향 계산 (pitch 포함)
+		// 카메라 시야 방향 계산
 		glm::vec3 cameraDirection;
 		cameraDirection.x = cos(pitch_rad) * sin(yaw_rad);
 		cameraDirection.y = sin(pitch_rad);
@@ -920,7 +1096,6 @@ void MakeDynamicMatrix(float deltaTime) {
 			// 3인칭 시점
 			glm::vec3 localOffset = glm::vec3(-1.5f, 12.0f, -5.0f) * scale_factor;
 
-			// Yaw 회전만 적용 (카메라 위치는 수평만)
 			glm::mat3 yawRotationMatrix = glm::mat3(
 				cos(-yaw_rad), 0.0f, sin(-yaw_rad),
 				0.0f, 1.0f, 0.0f,
@@ -929,7 +1104,6 @@ void MakeDynamicMatrix(float deltaTime) {
 			glm::vec3 worldOffset = yawRotationMatrix * localOffset;
 			EYE = Robot_Position + worldOffset;
 
-			// AT은 카메라 방향 (pitch 포함)
 			AT = Robot_Position + cameraDirection * (50.0f * scale_factor) + glm::vec3(0.0f, 2.0f * scale_factor, 0.0f);
 		}
 		else {
@@ -1178,6 +1352,7 @@ void Type_distinction(const std::string& object_name, GLuint& outTypeID) {
 }
 
 Maze MakeMaze(int N, int M) {
+	// Eller의 알고리즘을 사용한 미로 생성
 	if (N <= 0) N = 1;
 	if (M <= 0) M = 1;
 	Maze maze(M, N);
@@ -1210,7 +1385,7 @@ Maze MakeMaze(int N, int M) {
 						sets[k] = sets[j];
 					}
 				}
-				maze.grid[2 * i + 1][2 * (j + 1)] = 0; // 통로
+				maze.grid[2 * i + 1][2 * (j + 1)] = 0;
 			}
 		}
 
@@ -1228,10 +1403,10 @@ Maze MakeMaze(int N, int M) {
 
 				for (int member_idx : shuffled_members) {
 					if (passages < members.size() - 1 && urd(dre) > 0.5f) {
-						// 벽 유지
+						
 					}
 					else {
-						maze.grid[2 * (i + 1)][2 * member_idx + 1] = 0; // 통로
+						maze.grid[2 * (i + 1)][2 * member_idx + 1] = 0;
 						passages++;
 					}
 				}
@@ -1244,19 +1419,16 @@ Maze MakeMaze(int N, int M) {
 
 		// 4. 다음 행 준비
 		for (int j = 0; j < M; ++j) {
-			maze.grid[2 * i + 1][2 * j + 1] = 0; // 셀 위치는 항상 통로
+			maze.grid[2 * i + 1][2 * j + 1] = 0;
 			if (i < N - 1 && maze.grid[2 * (i + 1)][2 * j + 1] == 1) {
 				sets[j] = 0;
 			}
 		}
 	}
 
-	// 시작점 설정
 	maze.grid[maze.startY][maze.startX] = 0;
-	// 입구 설정
 	maze.grid[maze.enterPointY][maze.enterPointX] = 0;
 
-	// 출구 설정: 마지막 셀 아래에 출구 생성
 	maze.exitPointX = 2 * (M - 1) + 1;
 	maze.exitPointY = 2 * N;
 	maze.grid[maze.exitPointY][maze.exitPointX] = 0;
@@ -1266,6 +1438,25 @@ Maze MakeMaze(int N, int M) {
 }
 void MakeRobotAtMazeEntrance() {
 	RobotInWorld = !RobotInWorld;
+	if (!RobotInWorld) {
+		EYE = glm::vec3(0.0f, 30.0f, 50.0f);
+		AT = glm::vec3(0.0f, 10.0f, 0.0f);
+
+		Robot_Position = glm::vec3(0.0f);
+		Robot_Rotation_Y = 0.0f;
+		Robot_Direction = glm::vec3(0.0f);
+		Camera_Pitch = 0.0f;
+		MouseLookMode = false;
+
+		keyStates['w'] = false;
+		keyStates['s'] = false;
+		keyStates['a'] = false;
+		keyStates['d'] = false;
+
+		glutSetCursor(GLUT_CURSOR_INHERIT);
+
+		return;
+	}
 
 	AABB wallAABB = g_LocalAABBs.at("Wall");
 	glm::vec3 wallSize = wallAABB.max - wallAABB.min;
@@ -1295,7 +1486,6 @@ void MakeRobotAtMazeEntrance() {
 	}
 }
 
-// 로봇의 새로운 위치에서 벽과의 충돌을 체크합니다.
 bool CheckRobotWallCollision(const glm::vec3& newPosition) {
 	AABB robotLocalAABB = CalculateRobotAABB();
 
@@ -1309,7 +1499,7 @@ bool CheckRobotWallCollision(const glm::vec3& newPosition) {
 	AABB wallLocalAABB = g_LocalAABBs.at("Wall");
 	glm::vec3 wallSize = wallLocalAABB.max - wallLocalAABB.min;
 
-	// 로봇 주변 그리드만 체크 (최적화)
+	// 로봇 주변 그리드만 체크
 	float halfWidth = (robotWorldAABB.max.x - robotWorldAABB.min.x) / 2.0f;
 	float halfDepth = (robotWorldAABB.max.z - robotWorldAABB.min.z) / 2.0f;
 
@@ -1320,7 +1510,7 @@ bool CheckRobotWallCollision(const glm::vec3& newPosition) {
 	for (int i = gridZ - 1; i <= gridZ + 1; ++i) {
 		for (int j = gridX - 1; j <= gridX + 1; ++j) {
 			if (i >= 0 && i < g_Maze.height && j >= 0 && j < g_Maze.width) {
-				if (g_Maze.grid[i][j] == 1) { // 벽이 있는 위치
+				if (g_Maze.grid[i][j] == 1) {
 					// 벽의 변환 행렬 계산
 					float x_offset = -g_Maze.width * wallSize.x / 2.0f;
 					float z_offset = -g_Maze.height * wallSize.z / 2.0f;
@@ -1338,14 +1528,14 @@ bool CheckRobotWallCollision(const glm::vec3& newPosition) {
 					bool collisionZ = (robotWorldAABB.min.z <= wallWorldAABB.max.z && robotWorldAABB.max.z >= wallWorldAABB.min.z);
 
 					if (collisionX && collisionZ) {
-						return true; // 충돌 발생
+						return true;
 					}
 				}
 			}
 		}
 	}
 
-	return false; // 충돌 없음
+	return false;
 }
 AABB CalculateRobotAABB() {
 	std::vector<std::string> robotParts = {
