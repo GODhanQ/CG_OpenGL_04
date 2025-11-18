@@ -8,7 +8,8 @@ std::uniform_int_distribution<int> uid_0_3(0, 3);
 
 glm::mat4 Perspective_Matrix(1.0f), View_Matrix(1.0f);
 glm::mat4 Model_Matrix(1.0f);
-glm::mat4 Floor_Matrix(1.0f), Tank_Matrix(1.0f);
+glm::mat4 Floor_Matrix(1.0f);
+glm::mat4 Mercury_Matrix(1.0f), Venus_Matrix(1.0f), Earth_Matrix(1.0f);
 glm::mat4 Snow_Matrix(1.0f);
 
 std::vector<OBJ_File> g_OBJ_Files;
@@ -194,15 +195,14 @@ void DrawModels(float deltaTime) {
 			snow.current_position.z += Wind.z * deltaTime;
 
 			// 바닥에 닿으면 초기 위치로 리셋
-			if (snow.current_position.y < ground_y) {
+			if (snow.current_position.y < ground_y - snow.init_position.y) {
 				snow.current_position = snow.init_position;
 			}
 		}
 
 		// Snow_Matrix 계산: init_position에서 current_position으로의 변위
 		Snow_Matrix = glm::mat4(1.0f);
-		glm::vec3 displacement = snow.current_position - snow.init_position;
-		Snow_Matrix = glm::translate(Snow_Matrix, displacement);
+		Snow_Matrix = glm::translate(Snow_Matrix, snow.current_position);
 
 		// Snow_Matrix를 셰이더로 전송
 		glUniformMatrix4fv(SnowMatrixID, 1, GL_FALSE, &Snow_Matrix[0][0]);
@@ -496,11 +496,11 @@ void INIT_BUFFER() {
 
 			snow.init_position = glm::vec3(
 				urd_0_1(dre) * 20.0f - 10.0f,   // x: -10 ~ 10
-				urd_0_1(dre) * 5.0f + 5.0f,   // y: 10 ~ 20
+				urd_0_1(dre) * 10.0f + 10.0f,   // y: 10 ~ 20
 				urd_0_1(dre) * 20.0f - 10.0f    // z: -10 ~ 10
 			);
 			snow.current_position = snow.init_position;
-			snow.fall_speed = urd_0_1(dre) * 3.0f + 1.0f;
+			snow.fall_speed = urd_0_1(dre) * 1.0f + 1.0f;
 
 			snow.snow_obj = *snowTemplateObj;
 			snow.snow_obj.name = "Snow_" + std::to_string(i);
@@ -775,11 +775,9 @@ void MakeDynamicMatrix(float deltaTime) {
 
 	if (Rotation_Mode == 1) {
 		Floor_Rotation_Angle += Floor_Rotation_Factor * deltaTime;
-		Tank_Rotation_Angle += Tank_Rotation_Factor * deltaTime;
 	}
 	else if (Rotation_Mode == 2) {
 		Floor_Rotation_Angle -= Floor_Rotation_Factor * deltaTime;
-		Tank_Rotation_Angle -= Tank_Rotation_Factor * deltaTime;
 	}
 
 	if (Revolution_Mode == 1) {
@@ -811,6 +809,35 @@ void MakeDynamicMatrix(float deltaTime) {
 		Floor_Matrix = local;
 	}
 
+	Mercury_Rotation_Angle += Mercury_Rotation_Factor * deltaTime;
+	Venus_Rotation_Angle += Venus_Rotation_Factor * deltaTime;
+	Earth_Rotation_Angle += Earth_Rotation_Factor * deltaTime;
+
+	// Planet Rotation
+	for (auto& file : g_OBJ_Files) {
+		for (auto& object : file.objects) {
+			glm::mat4 local = glm::mat4(1.0f);
+			if (object.name == "Mercury") {
+				//local = glm::translate(local, object.origin);
+				local = glm::rotate(local, glm::radians(Mercury_Rotation_Angle), glm::vec3(0.0f, 1.0f, 0.0f));
+				//local = glm::translate(local, -object.origin);
+				Mercury_Matrix = local;
+			}
+			else if (object.name == "Venus") {
+				//local = glm::translate(local, object.origin);
+				local = glm::rotate(local, glm::radians(Venus_Rotation_Angle), glm::vec3(1.0f, 0.0f, 0.0f));
+				//local = glm::translate(local, -object.origin);
+				Venus_Matrix = local;
+			}
+			else if (object.name == "Earth") {
+				//local = glm::translate(local, object.origin);
+				local = glm::rotate(local, glm::radians(Earth_Rotation_Angle), glm::vec3(0.0f, 0.0f, 1.0f));
+				//local = glm::translate(local, -object.origin);
+				Earth_Matrix = local;
+			}
+			else continue;
+		}
+	}
 
 	// Light Revolution
 	for (auto& light : g_Lights) {
@@ -835,8 +862,10 @@ void GetUniformLocations() {
 	ViewMatrixID = glGetUniformLocation(shaderProgramID, "View_Matrix");
 	ModelMatrixID = glGetUniformLocation(shaderProgramID, "Model_Matrix");
 	FloorMatrixID = glGetUniformLocation(shaderProgramID, "Floor_Matrix");
-	TankMatrixID = glGetUniformLocation(shaderProgramID, "Tank_Matrix");
 	ViewPosID = glGetUniformLocation(shaderProgramID, "viewPos");
+	MercuryMatrixID = glGetUniformLocation(shaderProgramID, "Mercury_Matrix");
+	VenusMatrixID = glGetUniformLocation(shaderProgramID, "Venus_Matrix");
+	EarthMatrixID = glGetUniformLocation(shaderProgramID, "Earth_Matrix");
 
 	// dynamic uniform variable
 	FigureTypeID = glGetUniformLocation(shaderProgramID, "Figure_Type");
@@ -854,8 +883,10 @@ void UpdateUniformMatrices() {
 	glUniformMatrix4fv(ViewMatrixID, 1, GL_FALSE, &View_Matrix[0][0]);
 	glUniformMatrix4fv(ModelMatrixID, 1, GL_FALSE, &Model_Matrix[0][0]);
 	glUniformMatrix4fv(FloorMatrixID, 1, GL_FALSE, &Floor_Matrix[0][0]);
-	glUniformMatrix4fv(TankMatrixID, 1, GL_FALSE, &Tank_Matrix[0][0]);
 	glUniform3fv(ViewPosID, 1, &EYE[0]);
+	glUniformMatrix4fv(MercuryMatrixID, 1, GL_FALSE, &Mercury_Matrix[0][0]);
+	glUniformMatrix4fv(VenusMatrixID, 1, GL_FALSE, &Venus_Matrix[0][0]);
+	glUniformMatrix4fv(EarthMatrixID, 1, GL_FALSE, &Earth_Matrix[0][0]);
 
 	if (PerspectiveMatrixID == -1) std::cerr << "Could not bind uniform Perspective_Matrix\n";
 	if (ViewMatrixID == -1) std::cerr << "Could not bind uniform View_Matrix\n";
@@ -863,6 +894,9 @@ void UpdateUniformMatrices() {
 	if (FloorMatrixID == -1) std::cerr << "Could not bind uniform Cube_Matrix\n";
 	if (TankMatrixID == -1) std::cerr << "Could not bind uniform Pyramid_Matrix\n";
 	if (ViewPosID == -1) std::cerr << "Could not bind uniform viewPos\n";
+	if (MercuryMatrixID == -1) std::cerr << "Could not bind uniform Mercury_Matrix\n";
+	if (VenusMatrixID == -1) std::cerr << "Could not bind uniform Venus_Matrix\n";
+	if (EarthMatrixID == -1) std::cerr << "Could not bind uniform Earth_Matrix\n";
 
 }
 void ComposeOBJColor() {

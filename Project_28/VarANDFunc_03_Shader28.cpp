@@ -29,6 +29,10 @@ GLuint FloorMatrixID{}, TankMatrixID{};
 float Floor_Rotation_Angle{}, Tank_Rotation_Angle{};
 float Floor_Rotation_Factor{ 50.0f }, Tank_Rotation_Factor{ 50.0f };
 
+GLuint MercuryMatrixID{}, VenusMatrixID{}, EarthMatrixID{};
+float Mercury_Rotation_Angle{}, Venus_Rotation_Angle{}, Earth_Rotation_Angle{};
+float Mercury_Rotation_Factor{ 47.87f }, Venus_Rotation_Factor{ 35.02f }, Earth_Rotation_Factor{ 29.78f };
+
 GLuint SnowMatrixID{};
 
 float Light_Revolution_Angle{}, Light_Revolution_Factor{ 50.0f };

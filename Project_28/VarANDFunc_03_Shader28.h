@@ -120,8 +120,12 @@ extern glm::vec3 Model_Transform, Model_Scale;
 extern int Rotation_Mode, Revolution_Mode;
 
 extern GLuint FloorMatrixID, TankMatrixID;
-extern float Floor_Rotation_Angle, Tank_Rotation_Angle;
-extern float Floor_Rotation_Factor, Tank_Rotation_Factor;
+extern float Floor_Rotation_Angle;
+extern float Floor_Rotation_Factor;
+
+extern GLuint MercuryMatrixID, VenusMatrixID, EarthMatrixID;
+extern float Mercury_Rotation_Angle, Venus_Rotation_Angle, Earth_Rotation_Angle;
+extern float Mercury_Rotation_Factor, Venus_Rotation_Factor, Earth_Rotation_Factor;
 
 extern GLuint SnowMatrixID;
 
