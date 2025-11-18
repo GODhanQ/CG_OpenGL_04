@@ -13,22 +13,29 @@ uniform mat4 Perspective_Matrix;
 
 uniform mat4 Floor_Matrix;
 uniform mat4 Tank_Matrix;
+uniform mat4 Snow_Matrix;
 
 uniform int Figure_Type;
 
 const int FLOOR = 0;
-const int TANK = 1;
-const int WALL = 2;
+const int PYRAMID = 1;
+const int MERCURY = 2;
+const int VENUS = 3;
+const int EARTH = 4;
+
+const int SNOW = 95;
 
 void main()
 {
     mat4 final_transform = mat4(1.0);
 
     if (Figure_Type >= 0) {
-        if (Figure_Type == FLOOR) { // FLOOR
+        if (Figure_Type == FLOOR) {
             final_transform = Model_Matrix * Floor_Matrix;
-        } else if (Figure_Type == TANK) { // TANK
+        } else if (Figure_Type == PYRAMID) {
             final_transform = Model_Matrix * Tank_Matrix;
+        } else if (Figure_Type == SNOW) {
+            final_transform = Model_Matrix * Snow_Matrix;
         } else { // ETC (99) 및 기타 객체
             final_transform = Model_Matrix;
         }

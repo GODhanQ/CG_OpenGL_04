@@ -1,25 +1,6 @@
-﻿  CG_OpenGL_03_Maze.cpp
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(5,32): warning C4244: '인수': '_Rep'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(5,32): warning C4244:         with
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(5,32): warning C4244:         [
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(5,32): warning C4244:             _Rep=__int64
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(5,32): warning C4244:         ]
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(118,42): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(124,50): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(128,80): warning C4267: '인수': 'size_t'에서 'GLint'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(213,59): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(240,52): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(398,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(405,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(412,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(677,69): warning C4267: '인수': 'size_t'에서 '_Ty'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(677,69): warning C4267:         with
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(677,69): warning C4267:         [
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(677,69): warning C4267:             _Ty=std::seed_seq::result_type
-C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\Maze\CG_OpenGL_03_Maze.cpp(677,69): warning C4267:         ]
-  코드를 생성하고 있습니다.
-  1 of 1378 functions (<0.1%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+﻿  코드를 생성하고 있습니다.
+  1354 of 1378 functions (98.3%) were compiled, the rest were copied from previous compilation.
+    25 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
-  Maze.vcxproj -> C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\x64\Release\Maze.exe
+  Maze.vcxproj -> C:\Users\E323-05\source\repos\GODhanQ\CG_OpenGL_04\x64\Release\Maze.exe
