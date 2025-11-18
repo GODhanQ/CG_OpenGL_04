@@ -124,7 +124,17 @@ void DrawModels(float deltaTime) {
 	glBindVertexArray(VAO_orbit);
 	glUniform1i(FigureTypeID, Figure_Type::ORBIT);
 	glLineWidth(1.0f);
-	glDrawElements(GL_LINE_STRIP, orbit_indices.size(), GL_UNSIGNED_INT, 0);
+	//glDrawElements(GL_LINE_STRIP, orbit_indices.size(), GL_UNSIGNED_INT, 0);
+
+	// Mercury Orbit
+	glDrawElements(GL_LINE_LOOP, 101, GL_UNSIGNED_INT, 0);
+
+	// Venus Orbit
+	glDrawElements(GL_LINE_LOOP, 101, GL_UNSIGNED_INT, (void*)(101 * sizeof(unsigned int)));
+
+	// Earth Orbit
+	glDrawElements(GL_LINE_LOOP, 101, GL_UNSIGNED_INT, (void*)(202 * sizeof(unsigned int)));
+
 
 	// Draw Light Source & Set Light Uniforms
 	if (Light_On) {
@@ -948,18 +958,65 @@ void ComposeOribit() {
 	orbit_indices.clear();
 
 	const int orbit_segments = 100;
-	const glm::vec3 orbit_y = glm::vec3(0.0, Light_Trasform.y, 0.0);
-	const glm::vec3 orbit_center_for_radius = Light_Trasform - orbit_y;
-	const float orbit_radius = glm::length(orbit_center_for_radius);
-	for (int i = 0; i <= orbit_segments; ++i) {
-		float angle = 2.0f * glm::pi<float>() * static_cast<float>(i) / orbit_segments;
-		Vertex_glm vertex;
-		vertex.position.x = orbit_radius * cos(angle);
-		vertex.position.y = Light_Trasform.y;
-		vertex.position.z = orbit_radius * sin(angle);
-		vertex.color = glm::vec3(0.8f, 0.8f, 0.2f);
-		orbit_vertices.push_back(vertex);
-		orbit_indices.push_back(i);
+
+	// Mercury Orbit (Y축 공전)
+	Custom_OBJ* mercuryObj = nullptr;
+	Custom_OBJ* venusObj = nullptr;
+	Custom_OBJ* earthObj = nullptr;
+
+	for (auto& file : g_OBJ_Files) {
+		for (auto& object : file.objects) {
+			if (object.name == "Mercury") mercuryObj = &object;
+			else if (object.name == "Venus") venusObj = &object;
+			else if (object.name == "Earth") earthObj = &object;
+		}
+	}
+
+	int currentIndex = 0;
+
+	// Mercury Orbit (Y축 기준 공전 - XZ 평면)
+	if (mercuryObj) {
+		float mercury_radius = glm::length(glm::vec2(mercuryObj->origin.x, mercuryObj->origin.z));
+		for (int i = 0; i <= orbit_segments; ++i) {
+			float angle = 2.0f * glm::pi<float>() * static_cast<float>(i) / orbit_segments;
+			Vertex_glm vertex;
+			vertex.position.x = mercury_radius * cos(angle);
+			vertex.position.y = mercuryObj->origin.y;
+			vertex.position.z = mercury_radius * sin(angle);
+			vertex.color = glm::vec3(0.5f, 0.5f, 0.5f); // 회색
+			orbit_vertices.push_back(vertex);
+			orbit_indices.push_back(currentIndex++);
+		}
+	}
+
+	// Venus Orbit (X축 기준 공전 - YZ 평면)
+	if (venusObj) {
+		float venus_radius = glm::length(glm::vec2(venusObj->origin.y, venusObj->origin.z));
+		for (int i = 0; i <= orbit_segments; ++i) {
+			float angle = 2.0f * glm::pi<float>() * static_cast<float>(i) / orbit_segments;
+			Vertex_glm vertex;
+			vertex.position.x = venusObj->origin.x;
+			vertex.position.y = venus_radius * cos(angle);
+			vertex.position.z = venus_radius * sin(angle);
+			vertex.color = glm::vec3(0.9f, 0.8f, 0.3f); // 금색
+			orbit_vertices.push_back(vertex);
+			orbit_indices.push_back(currentIndex++);
+		}
+	}
+
+	// Earth Orbit (Z축 기준 공전 - XY 평면)
+	if (earthObj) {
+		float earth_radius = glm::length(glm::vec2(earthObj->origin.x, earthObj->origin.y));
+		for (int i = 0; i <= orbit_segments; ++i) {
+			float angle = 2.0f * glm::pi<float>() * static_cast<float>(i) / orbit_segments;
+			Vertex_glm vertex;
+			vertex.position.x = earth_radius * cos(angle);
+			vertex.position.y = earth_radius * sin(angle);
+			vertex.position.z = earthObj->origin.z;
+			vertex.color = glm::vec3(0.3f, 0.6f, 1.0f); // 파란색
+			orbit_vertices.push_back(vertex);
+			orbit_indices.push_back(currentIndex++);
+		}
 	}
 
 	glGenVertexArrays(1, &VAO_orbit);
@@ -979,11 +1036,8 @@ void ComposeOribit() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO_orbit);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, orbit_indices.size() * sizeof(unsigned int), orbit_indices.data(), GL_STATIC_DRAW);
 
-
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-
-
 }
 
 void Type_distinction(const std::string& object_name, GLuint& outTypeID) {

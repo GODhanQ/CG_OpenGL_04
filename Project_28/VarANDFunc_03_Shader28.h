@@ -24,7 +24,6 @@ extern bool keyStates[256];
 extern std::map<int, bool> specialKeyStates;
 
 namespace Figure_Type {
-	const int ORBIT = -3;
 	const int LIGHT = -2;
 	const int AXIS = -1;
 
@@ -35,6 +34,7 @@ namespace Figure_Type {
 	const int EARTH = 4;
 
 	const int SNOW = 95;
+	const int ORBIT = 96;
 
 	const int ETC = 99;
 }
