@@ -161,6 +161,7 @@ extern bool FirstMouse;
 extern float MouseSensitivity;
 
 extern bool WaitingForMazeInput;
+extern bool CreatingWalls;
 
 GLvoid drawScene();
 GLvoid Reshape(int w, int h);

@@ -237,10 +237,14 @@ void DrawModels(float deltaTime) {
 					float& theta = g_Maze.wallHeights[i][j];
 
 					if (ScaleWallHeight) {
-						const float animation_speed = 5.0f * urd_0_1(dre) * animation_speed_factor;
+						float animation_speed{};
+						if (!CreatingWalls) animation_speed = 5.0f * urd_0_1(dre) * animation_speed_factor;
+						else animation_speed = 0.5f * animation_speed_factor;
 						theta += animation_speed * deltaTime;
 						if (theta > 2.0f * pi) {
 							theta -= 2.0f * pi;
+							if (CreatingWalls) ScaleWallHeight = false;
+							CreatingWalls = false;
 						}
 					}
 
@@ -435,11 +439,14 @@ void KeyBoard(unsigned char key, int x, int y) {
 		g_Maze = MakeMaze(rows, cols);
 		for (int i = 0; i < g_Maze.height; ++i) {
 			for (int j = 0; j < g_Maze.width; ++j) {
+				g_Maze.wallHeights[i][j] = 3.141592f;
 				std::cout << (g_Maze.grid[i][j] == 1 ? "#" : " ");
 			}
 			std::cout << "\n";
 		}
+		CreatingWalls = true;
 		RobotInWorld = true;
+		ScaleWallHeight = true;
 		MakeRobotAtMazeEntrance();
 
 		std::cout << "Generated a new maze of size " << rows << "x" << cols << ".\n";
@@ -1220,7 +1227,7 @@ void ComposeOBJColor() {
 	for (auto& file : g_OBJ_Files) {
 		for (auto& object : file.objects) {
 			if (object.name == "Floor") {
-				glm::vec3 bodyColor(0.8f, 0.5f, 0.5f);
+				glm::vec3 bodyColor(0.5f, 0.8f, 0.5f);
 				for (auto& vertex : object.vertices) {
 					vertex.color = bodyColor;
 				}
@@ -1432,7 +1439,6 @@ Maze MakeMaze(int N, int M) {
 	maze.exitPointX = 2 * (M - 1) + 1;
 	maze.exitPointY = 2 * N;
 	maze.grid[maze.exitPointY][maze.exitPointX] = 0;
-
 
 	return maze;
 }

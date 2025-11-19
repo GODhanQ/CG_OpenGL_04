@@ -66,6 +66,7 @@ bool FirstMouse = true;
 float MouseSensitivity = 0.05f;
 
 bool WaitingForMazeInput = false;
+bool CreatingWalls = false;
 
 std::vector<Vertex_glm> Axis_Vertex = {
 	// Positions					// Colors
