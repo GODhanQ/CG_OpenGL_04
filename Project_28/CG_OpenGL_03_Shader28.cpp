@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+﻿#define _CRT_SECURE_NO_WARNINGS
 #include "VarANDFunc_03_Shader28.h"
 
 auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -238,9 +238,40 @@ void KeyBoard(unsigned char key, int x, int y) {
 	keyStates[key] = true;
 	switch (key) {
 	case 'n':
-		Draw_Cube = !Draw_Cube;
+		// 조명의 공전 범위 감소
+		for (auto& light : g_Lights) {
+			light.init_position.x *= 0.9f;
+			light.init_position.z *= 0.9f;
+			light.light_vertex.position.x *= 0.9f;
+			light.light_vertex.position.z *= 0.9f;
 
-		std::cout << (Draw_Cube ? "Draw Cube\n" : "Draw Pyramid\n");
+			// VBO 업데이트
+			if (light.VBO != 0) {
+				glBindBuffer(GL_ARRAY_BUFFER, light.VBO);
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex_glm), &light.light_vertex);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+			}
+		}
+
+		std::cout << "Light Orbit Decreased\n";
+		break;
+	case 'f':
+		// 조명의 공전 범위 증가
+		for (auto& light : g_Lights) {
+			light.init_position.x *= 1.1f;
+			light.init_position.z *= 1.1f;
+			light.light_vertex.position.x *= 1.1f;
+			light.light_vertex.position.z *= 1.1f;
+
+			// VBO 업데이트
+			if (light.VBO != 0) {
+				glBindBuffer(GL_ARRAY_BUFFER, light.VBO);
+				glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex_glm), &light.light_vertex);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+			}
+		}
+
+		std::cout << "Light Orbit Increased\n";
 		break;
 	case 'm':
 		Light_On = !Light_On;
@@ -443,19 +474,19 @@ void INIT_BUFFER() {
 	glBindVertexArray(0);
 
 	// Create Light Source Buffers
-	Light light1(glm::vec3(0.0f, 5.5f, 0.0f));
+	Light light1(glm::vec3(20.0f, 5.5f, 0.0f));
 	light1.intensity = 5.0f;
 	g_Lights.push_back(light1);
 
-	Light light2(glm::vec3(20.0f, 5.5f, -20.0f));
+	Light light2(glm::vec3(-20.0f, 5.5f, 0.0f));
 	light2.intensity = 5.0f;
 	g_Lights.push_back(light2);
 
-	Light light3(glm::vec3(-20.0f, 5.5f, -20.0f));
+	Light light3(glm::vec3(0.0f, 5.5f, 20.0f));
 	light3.intensity = 5.0f;
 	g_Lights.push_back(light3);
 
-	Light light4(glm::vec3(0.0f, 5.5f, -40.0f));
+	Light light4(glm::vec3(0.0f, 5.5f, -20.0f));
 	light4.intensity = 5.0f;
 	g_Lights.push_back(light4);
 

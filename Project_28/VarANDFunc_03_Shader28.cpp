@@ -1,4 +1,4 @@
-#include "VarANDFunc_03_Shader28.h"
+﻿#include "VarANDFunc_03_Shader28.h"
 
 GLint Window_width{ 1200 }, Window_height{ 675 };
 
@@ -36,7 +36,7 @@ float Mercury_Rotation_Factor{ 47.87f }, Venus_Rotation_Factor{ 35.02f }, Earth_
 GLuint SnowMatrixID{};
 
 float Light_Revolution_Angle{}, Light_Revolution_Factor{ 50.0f };
-glm::vec3 Light_Trasform(0.0f, 5.5f, 20.0f);
+glm::vec3 Light_Trasform(0.0f, 5.5f, 0.0f);
 int light_color_template_index{};
 std::vector<glm::vec3> light_color_template = {
 	glm::vec3(1.0f, 1.0f, 1.0f), // White
