@@ -1,0 +1,124 @@
+﻿  CG_OpenGL_Shader.cpp
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(5,32): warning C4244: '인수': '_Rep'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(5,32): warning C4244:         with
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(5,32): warning C4244:         [
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(5,32): warning C4244:             _Rep=__int64
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(5,32): warning C4244:         ]
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,13): error C2065: 'Snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,6): error C2923: 'std::vector': 'Snow'은(는) '_Ty' 매개 변수에 대한 올바른 템플릿 형식 인수가 아닙니다.
+      C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,13):
+      'Snow' 선언을 참조하십시오.
+  
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,6): error C2976: 'std::vector': 템플릿 인수가 너무 적습니다.
+      C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(442,7):
+      'std::vector' 선언을 참조하십시오.
+  
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19): error C2641: 'std::vector'의 템플릿 인수를 추론할 수 없습니다.
+      C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+      'std::vector': 일치하는 오버로드된 함수가 없습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(2250,1):
+          'std::vector<conditional_t<std::_Is_from_primary<std::iterator_traits<remove_cv<remove_reference<_Ty>::type>::type>>,std::indirectly_readable_traits<remove_cv<remove_reference<_Ty>::type>::type>,std::iterator_traits<remove_cv<remove_reference<_Ty>::type>::type>>::value_type,_Alloc> std::vector(_Iter,_Iter,_Alloc)'일 수 있습니다.
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<conditional_t<std::_Is_from_primary<std::iterator_traits<remove_cv<remove_reference<_Ty>::type>::type>>,std::indirectly_readable_traits<remove_cv<remove_reference<_Ty>::type>::type>,std::iterator_traits<remove_cv<remove_reference<_Ty>::type>::type>>::value_type,_Alloc> std::vector(_Iter,_Iter,_Alloc)': 3개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(768,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(std::vector<_Ty,_Alloc> &&,const _Identity<_Alloc>::type &) noexcept(<expr>)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(std::vector<_Ty,_Alloc> &&,const _Identity<_Alloc>::type &) noexcept(<expr>)': 2개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(759,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(std::vector<_Ty,_Alloc> &&) noexcept'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(std::vector<_Ty,_Alloc> &&) noexcept': 1개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(752,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(const std::vector<_Ty,_Alloc> &,const _Identity<_Alloc>::type &)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(const std::vector<_Ty,_Alloc> &,const _Identity<_Alloc>::type &)': 2개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(745,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(const std::vector<_Ty,_Alloc> &)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(const std::vector<_Ty,_Alloc> &)': 1개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(719,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(std::initializer_list<_Elem>,const _Alloc &)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(std::initializer_list<_Elem>,const _Alloc &)': 2개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(692,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(_Iter,_Iter,const _Alloc &)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(_Iter,_Iter,const _Alloc &)': 3개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(686,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(const allocator_traits<allocator_traits<_Alloc>::rebind_alloc<_Ty>>::size_type,const _Ty &,const _Alloc &)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(const allocator_traits<allocator_traits<_Alloc>::rebind_alloc<_Ty>>::size_type,const _Ty &,const _Alloc &)': 3개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(678,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(const allocator_traits<allocator_traits<_Alloc>::rebind_alloc<_Ty>>::size_type,const _Alloc &)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(const allocator_traits<allocator_traits<_Alloc>::rebind_alloc<_Ty>>::size_type,const _Alloc &)': 2개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(674,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(const _Alloc &) noexcept'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(const _Alloc &) noexcept': 1개의 인수가 필요합니다. 0개가 제공되었습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(670,5):
+          또는       'std::vector<_Ty,_Alloc> std::vector(void) noexcept(<expr>)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(void) noexcept(<expr>)': '_Ty'의 템플릿 인수를 추론할 수 없습니다.
+          C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(442,7):
+          또는       'std::vector<_Ty,_Alloc> std::vector(std::vector<_Ty,_Alloc>)'
+              C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(20,19):
+              'std::vector<_Ty,_Alloc> std::vector(std::vector<_Ty,_Alloc>)': 1개의 인수가 필요합니다. 0개가 제공되었습니다.
+  
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(118,42): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(121,6): error C2065: 'Light_On': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(122,80): warning C4267: '인수': 'size_t'에서 'GLint'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(161,52): warning C4267: '인수': 'size_t'에서 'GLsizei'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(181,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(188,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(195,2): warning C4065: switch문에 'default'가 있으나 'case' 레이블이 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(295,4): error C2065: 'Snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(295,9): error C2146: 구문 오류: ';'이(가) 'snow' 식별자 앞에 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(295,9): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(297,4): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(302,4): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(302,28): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(303,4): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(305,4): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(306,4): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(308,24): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(308,15): error C2530: 'vertex': 참조를 초기화해야 합니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(308,15): error C3531: 'vertex': 형식에 'auto'이(가) 포함된 기호에는 이니셜라이저가 있어야 합니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(308,22): error C2143: 구문 오류: ';'이(가) ':' 앞에 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(308,46): error C2143: 구문 오류: ';'이(가) ')' 앞에 없습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(309,24): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(312,26): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(312,4): error C2198: 'PFNGLGENVERTEXARRAYSPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(313,21): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(313,4): error C2198: 'PFNGLGENBUFFERSPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(314,21): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(314,4): error C2198: 'PFNGLGENBUFFERSPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(316,22): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(318,34): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(318,4): error C2198: 'PFNGLBINDBUFFERPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(320,5): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(321,5): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(319,4): error C2198: 'PFNGLBUFFERDATAPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(331,42): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(331,4): error C2198: 'PFNGLBINDBUFFERPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(333,5): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(334,5): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(332,4): error C2198: 'PFNGLBUFFERDATAPROC': 호출에 인수가 너무 적습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(339,22): error C2065: 'snow': 선언되지 않은 식별자입니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(341,38): error C2662: 'allocator_traits<allocator_traits<_Alloc>::rebind_alloc<_Ty>>::size_type std::vector<_Ty,_Alloc>::size(void) noexcept const': 'this' 포인터를 'std::vector'에서 'const std::vector<_Ty,_Alloc> &'(으)로 변환할 수 없습니다.
+      C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(341,30):
+      원인: 'std::vector'에서 'const std::vector<_Ty,_Alloc>'(으)로 변환할 수 없습니다.
+      C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(341,30):
+      변환하려면 둘째 사용자 정의 변환 연산자 또는 생성자가 있어야 합니다.
+      C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include\vector(1913,39):
+      'std::vector<_Ty,_Alloc>::size' 선언을 참조하십시오.
+      C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(341,38):
+      인수 목록 '()'을(를) 일치시키는 동안
+  
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(341,45): warning C4552: '<<': 식의 결과가 사용되지 않습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(507,69): warning C4267: '인수': 'size_t'에서 '_Ty'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(507,69): warning C4267:         with
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(507,69): warning C4267:         [
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(507,69): warning C4267:             _Ty=std::seed_seq::result_type
+C:\Users\hgmin\source\repos\GODhanQ\CG_OpenGL_04\OpenGL_Template\CG_OpenGL_Shader.cpp(507,69): warning C4267:         ]
+  VarANDFunc_Shader.cpp
